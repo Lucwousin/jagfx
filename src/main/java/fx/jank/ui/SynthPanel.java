@@ -1,0 +1,199 @@
+package fx.jank.ui;
+
+import fx.jank.rs.BufferedTrack;
+import fx.jank.rs.Mixer;
+import fx.jank.rs.PcmStream;
+import fx.jank.rs.RawPcmStream;
+import fx.jank.rs.Resampler;
+import static fx.jank.rs.SoundSystem.sampleRate;
+import fx.jank.rs.Synth;
+import fx.jank.rs.Tone;
+import static fx.jank.ui.EnvelopeSettings.createGapSettings;
+import static fx.jank.ui.EnvelopeSettings.createOscillatorSettings;
+import fx.jank.ui.components.WaveGraph;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import javax.inject.Provider;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import lombok.Getter;
+
+public class  SynthPanel extends JPanel
+{
+	private Synth synth;
+	private int selectedTone = 0;
+
+	private final Mixer mixer;
+
+	// main oscillator waveform and frequency selectors
+	private EnvelopeSettings freqBaseCfg;
+	private EnvelopeSettings freqModCfg;
+	private EnvelopeSettings ampModCfg;
+	private EnvelopeSettings gapCfg;
+	private LoopControls loopControls;
+	private MediaControls mediaControls;
+	private EnvelopePanel frqEditor;
+	private EnvelopePanel ampEditor;
+	private EnvelopePanel gapEditor;
+	private HarmonicSettings harmonicSettings = new HarmonicSettings(this);
+
+	@Getter
+	private BufferedTrack buffer = null;
+	private BufferedTrack soloBuffer = null;
+	private RawPcmStream stream;
+	private GraphView waveGraph;
+
+	SynthPanel(Mixer mixer) {
+		this.mixer = mixer;
+		this.synth = new Synth();
+
+		// todo: tone selector
+
+
+	}
+
+	void init() {
+		final Provider<Tone> toneProvider = this::getSelectedTone;
+		this.freqBaseCfg = createOscillatorSettings(this, () -> toneProvider.get().getFreqBase());
+		this.freqModCfg = createOscillatorSettings(this, () -> toneProvider.get().getFreqModRate());
+		this.ampModCfg = createOscillatorSettings(this, () -> toneProvider.get().getAmpModRate());
+		this.gapCfg = createGapSettings(this, () -> toneProvider.get().getGapOff());
+		this.loopControls = new LoopControls(this);
+		this.mediaControls = new MediaControls(this);
+		this.waveGraph = new GraphView("Final Output", new WaveGraph(this::getBuffer));
+		this.frqEditor = EnvelopePanel.frqEditor(this, freqModCfg);
+		this.ampEditor = EnvelopePanel.ampEditor(this, ampModCfg);
+		this.gapEditor = EnvelopePanel.gapEditor(this, gapCfg, waveGraph);
+		setLayout(new BorderLayout());
+		add(leftContainer(), BorderLayout.WEST);
+
+		add(center(), BorderLayout.CENTER);
+
+		add(bottom(), BorderLayout.SOUTH);
+
+		/*this.graphPanel = new ToneGraphPanel(getSelectedTone());
+		add(graphPanel, BorderLayout.CENTER);*/
+	}
+
+	private Container leftContainer() {
+		Container leftContainer = new JPanel();
+		leftContainer.setLayout(new BoxLayout(leftContainer, BoxLayout.Y_AXIS));
+		leftContainer.add(freqBaseCfg);
+		leftContainer.add(loopControls);
+		leftContainer.add(mediaControls);
+		//todo: truewave? wtf is that
+		return leftContainer;
+	}
+
+	private static GridBagConstraints chelper(int x, int y, int w) {
+		return new GridBagConstraints(
+			x, y, w, 1, 1.0, 0.0,
+			GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+			new Insets(0, 0, 0, 0), 50, 5);
+	}
+	private Container center() {
+		Container center = new JPanel(new GridBagLayout());
+		center.add(frqEditor, chelper(0, 0, 3));
+		center.add(ampEditor, chelper(0, 1, 3));
+		center.add(gapEditor, chelper(0, 2, 3));
+		return center;
+	}
+
+	private Container bottom() {
+		Container bottom = new JPanel();
+		bottom.setLayout(new BoxLayout(bottom, BoxLayout.X_AXIS));
+		bottom.add(new ToneSelector(this));
+		bottom.add(harmonicSettings);
+		return bottom;
+	}
+
+	Tone getSelectedTone() {
+		if (synth == null) return null;
+		if (synth.getTones()[selectedTone] == null) {
+			synth.getTones()[selectedTone] = new Tone();
+		}
+		return synth.getTones()[selectedTone];
+	}
+
+	int getSelectedToneIdx() {
+		return this.selectedTone;
+	}
+
+	void setSelectedTone(int idx) {
+		this.selectedTone = idx;
+		this.freqBaseCfg.revalidate();
+		this.freqModCfg.revalidate();
+		this.ampModCfg.revalidate();
+		this.gapCfg.revalidate();
+		this.harmonicSettings.revalidate();
+		this.update();
+	}
+
+	void play() {
+		if (stream != null && stream.isPlaying()) {
+			PcmStream.stop(stream);
+			stream = null;
+		}
+		if (soloBuffer == null) {
+			soloBuffer = this.getSelectedTone().getStream();
+		}
+		soloBuffer.loop = mediaControls.shouldLoop();
+		//soloBuffer.start = loopControls.getL1();
+		//soloBuffer.end = loopControls.getL2();
+		this.stream = RawPcmStream.createRawPcmStream(soloBuffer,100, 255);
+		stream.setNumLoops(mediaControls.getLoopCount());
+		mixer.addInput(stream);
+	}
+
+	void playAll() {
+		if (stream != null && stream.isPlaying()) {
+			PcmStream.stop(stream);
+			stream = null;
+		}
+		if (buffer == null) {
+			Resampler rs = new Resampler(22050, sampleRate);
+			buffer = synth.getStream().resample(rs);
+		}
+		buffer.pos = loopControls.getPos();
+		buffer.l1 = loopControls.getL1();
+		buffer.l2 = loopControls.getL2();
+		buffer.loop = mediaControls.shouldLoop();
+		this.stream = RawPcmStream.createRawPcmStream(buffer, 100, 255);
+		this.stream.setNumLoops(mediaControls.getLoopCount());
+		mixer.addInput(stream);
+	}
+
+	void stop() {
+		if (stream != null) {
+			PcmStream.stop(stream);
+			stream = null;
+		}
+	}
+
+	public void setSynth(Synth synth) {
+		this.synth = synth;
+		setSelectedTone(0);
+	}
+
+/*	public void revalidate() {
+		Tone t = getSelectedTone();
+		if (t == null)
+			return;
+		this.buffer = this.synth.getStream();
+		remove(graphPanel);
+		this.graphPanel = new ToneGraphPanel(getSelectedTone());
+		add(graphPanel, BorderLayout.CENTER);
+		super.revalidate();
+	}*/
+
+	public void update() {
+		Resampler rs = new Resampler(22050, sampleRate);
+		this.buffer = this.synth.getStream().resample(rs);
+		this.frqEditor.revalidate();
+		this.ampEditor.revalidate();
+		this.gapEditor.revalidate();
+	}
+}
