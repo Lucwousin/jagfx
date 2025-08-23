@@ -1,6 +1,6 @@
 package fx.jank.rs;
 
-import static fx.jank.JagFXPlugin.SAMPLE_RATE;
+import static fx.jank.rs.SoundSystem.sampleRate;
 import java.util.Arrays;
 import java.util.Random;
 import lombok.Getter;
@@ -62,7 +62,7 @@ public class Tone
 	int duration = 500;
 	int offset = 0;
 
-	private int[] samples = new int[SAMPLE_RATE * 10];
+	private int[] samples = new int[sampleRate * 10];
 	private int[] phases = new int[5];
 	private int[] delays = new int[5];
 	private int[] ampSteps = new int[5];
@@ -365,7 +365,7 @@ public class Tone
 	}
 
 	public BufferedTrack getStream() {
-		int[] mix = synthAll(SAMPLE_RATE);
+		int[] mix = synthAll(sampleRate);
 		byte[] bmix = new byte[mix.length];
 		for (int i = 0; i < mix.length; i++) {
 			int s = mix[i] >> 8;
@@ -374,6 +374,6 @@ public class Tone
 			}
 			bmix[i] = (byte)s;
 		}
-		return new BufferedTrack(SAMPLE_RATE, bmix, 0, duration);
+		return new BufferedTrack(sampleRate, bmix, 0, duration);
 	}
 }

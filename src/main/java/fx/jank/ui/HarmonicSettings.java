@@ -75,20 +75,62 @@ public class HarmonicSettings extends JPanel
 		}
 	}
 
+	private static class ReverbSettings extends JPanel {
+		private final JSpinner reverbVol = new JSpinner(new SpinnerNumberModel(100, 0, 100, 1));
+		private final JSpinner reverbDel = new JSpinner(new SpinnerNumberModel(0, 0, 65535, 1));
+		private final SynthPanel parent;
 
-	private final HarmonicSetting[] settings = new HarmonicSetting[5];
-	public HarmonicSettings(SynthPanel parent) {
-		//setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-		for (int i = 0; i < settings.length; i++) {
-			settings[i] = new HarmonicSetting(i, parent);
-			add(settings[i]);
+		private ReverbSettings(SynthPanel parent) {
+			this.parent = parent;
+			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			add(new JLabel("Reverb"));
+			JPanel container = new JPanel();
+			reverbVol.addChangeListener(e -> {
+				parent.getSelectedTone().setReverbVolume((int)reverbVol.getValue());
+				parent.update();
+			});
+			container.add(new JLabel("Reverb vol:"));
+			container.add(reverbVol);
+			add(container);
+			container = new JPanel();
+			reverbDel.addChangeListener(e -> {
+				parent.getSelectedTone().setReverbDelay((int)reverbDel.getValue());
+				parent.update();
+			});
+			container.add(new JLabel("Reverb del:"));
+			container.add(reverbDel);
+			add(container);
+		}
+
+		public void revalidate() {
+			if (parent == null)
+				return;
+			Tone t = parent.getSelectedTone();
+			int vol = t.getReverbVolume();
+			if ((int)reverbVol.getValue() != vol) {
+				reverbVol.setValue(vol);
+			}
+			int del = t.getReverbDelay();
+			if ((int)reverbDel.getValue() != del) {
+				reverbDel.setValue(del);
+			}
 		}
 	}
 
+	private final Container[] settings = new Container[6];
+	public HarmonicSettings(SynthPanel parent) {
+		//setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		for (int i = 0; i < 5; i++) {
+			settings[i] = new HarmonicSetting(i, parent);
+			add(settings[i]);
+		}
+		settings[5] = new ReverbSettings(parent);
+		add(settings[5]);
+	}
 	public void revalidate() {
 		if (settings == null)
 			return;
-		for (HarmonicSetting setting : settings) {
+		for (Container setting : settings) {
 			if (setting == null)
 				return;
 			setting.revalidate();

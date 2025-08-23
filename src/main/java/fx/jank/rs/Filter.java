@@ -1,5 +1,6 @@
 package fx.jank.rs;
 
+import static fx.jank.rs.SoundSystem.sampleRate;
 import lombok.ToString;
 
 @ToString
@@ -131,7 +132,7 @@ public class Filter
 	static float normalize(float var0) {
 		final float C0Hz = 32.703197F;
 		float var1 = C0Hz * (float)Math.pow(2.0D, (double)var0); 
-		return var1 * (float) Math.PI / (JagFXPlugin.SAMPLE_RATE / 2.f);
+		return var1 * (float) Math.PI / (sampleRate / 2.f);
 	}
 
 }
