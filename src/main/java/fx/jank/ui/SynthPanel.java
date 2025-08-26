@@ -27,6 +27,8 @@ public class  SynthPanel extends JPanel
 	private Synth synth;
 	private int selectedTone = 0;
 
+	private boolean initialized = false;
+
 	private final Mixer mixer;
 
 	// main oscillator waveform and frequency selectors
@@ -39,6 +41,10 @@ public class  SynthPanel extends JPanel
 	private EnvelopePanel frqEditor;
 	private EnvelopePanel ampEditor;
 	private EnvelopePanel gapEditor;
+	private ModeSelector modeSelector;
+	private JPanel centerContainer;
+	private JPanel mainPanel;
+	private JPanel filterPanel;
 	private HarmonicSettings harmonicSettings = new HarmonicSettings(this);
 
 	@Getter
@@ -66,17 +72,21 @@ public class  SynthPanel extends JPanel
 		setLayout(new BorderLayout());
 		add(leftContainer(), BorderLayout.WEST);
 
-		add(center(), BorderLayout.CENTER);
+		this.modeSelector = new ModeSelector(this);
+		this.mainPanel = buildMainPanel();
+		this.filterPanel = buildFilterPanel();
+		this.filterPanel.setVisible(false);
+
+		add(buildCenter(), BorderLayout.CENTER);
 
 		add(bottom(), BorderLayout.SOUTH);
 
 	}
 
 	void init() {
+		initialized = true;
 		this.update(); // lol
-
-		/*this.graphPanel = new ToneGraphPanel(getSelectedTone());
-		add(graphPanel, BorderLayout.CENTER);*/
+		this.revalidate();
 	}
 
 	private Container leftContainer() {
@@ -95,12 +105,24 @@ public class  SynthPanel extends JPanel
 			GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
 			new Insets(0, 0, 0, 0), 50, 5);
 	}
-	private Container center() {
-		Container center = new JPanel(new GridBagLayout());
+
+	private JPanel buildMainPanel() {
+		JPanel center = new JPanel(new GridBagLayout());
 		center.add(frqEditor, chelper(0, 0, 3));
 		center.add(ampEditor, chelper(0, 1, 3));
 		center.add(gapEditor, chelper(0, 2, 3));
 		return center;
+	}
+	private JPanel buildFilterPanel() {
+		JPanel filter = new JPanel(new GridBagLayout());
+		// todo
+		return filter;
+	}
+	private JPanel buildCenter() {
+		centerContainer = new JPanel();
+		centerContainer.add(mainPanel);
+		centerContainer.add(filterPanel);
+		return centerContainer;
 	}
 
 	private Container bottom() {
@@ -108,6 +130,7 @@ public class  SynthPanel extends JPanel
 		bottom.setLayout(new BoxLayout(bottom, BoxLayout.X_AXIS));
 		bottom.add(new ToneSelector(this));
 		bottom.add(harmonicSettings);
+		bottom.add(modeSelector);
 		return bottom;
 	}
 
@@ -194,5 +217,12 @@ public class  SynthPanel extends JPanel
 		this.ampEditor.revalidate();
 		this.gapEditor.revalidate();
 		this.loopControls.revalidate();
+	}
+
+	public void revalidate() {
+		if (!initialized)
+			return;
+		mainPanel.setVisible(modeSelector.displayMain());
+		filterPanel.setVisible(modeSelector.displayFilter());
 	}
 }
