@@ -19,9 +19,9 @@ public class Synth
 
 	private Tone[] tones = new Tone[10];
 	@Setter
-	int start;
+	int l1;
 	@Setter
-	int end;
+	int l2;
 
 	public Synth() {};
 
@@ -33,9 +33,9 @@ public class Synth
 			}
 		}
 
-		start = in.getUint16();
-		end = in.getUint16();
-		log.info("Synth start {} end {}", start, end);
+		l1 = in.getUint16();
+		l2 = in.getUint16();
+		log.info("Synth start {} end {}", l1, l2);
 	}
 
 	public byte[] mix()
@@ -63,9 +63,9 @@ public class Synth
 		int var2;
 		for (var2 = 0; var2 < 10; ++var2)
 		{
-			if (this.tones[var2] != null && this.tones[var2].duration + this.tones[var2].offset > max)
+			if (this.tones[var2] != null && this.tones[var2].len + this.tones[var2].pos > max)
 			{
-				max = this.tones[var2].duration + this.tones[var2].offset;
+				max = this.tones[var2].len + this.tones[var2].pos;
 			}
 		}
 		return max;
@@ -75,25 +75,25 @@ public class Synth
 		int minDelay = 9999999; 
 
 		for (int i = 0; i < 10; ++i) { 
-			if (this.tones[i] != null && this.tones[i].offset / 20 < minDelay) { 
-				minDelay = this.tones[i].offset / 20;
+			if (this.tones[i] != null && this.tones[i].pos / 20 < minDelay) {
+				minDelay = this.tones[i].pos / 20;
 			}
 		}
 
-		if (this.start < this.end && this.start / 20 < minDelay) { 
-			minDelay = this.start / 20;
+		if (this.l1 < this.l2 && this.l1 / 20 < minDelay) {
+			minDelay = this.l1 / 20;
 		}
 
 		if (minDelay != 9999999 && minDelay != 0) { 
 			for (int i = 0; i < 10; ++i) { 
 				if (this.tones[i] != null) {
-					this.tones[i].offset -= minDelay * 20; 
+					this.tones[i].pos -= minDelay * 20;
 				}
 			}
 
-			if (this.start < this.end) { 
-				this.start -= minDelay * 20; 
-				this.end -= minDelay * 20; 
+			if (this.l1 < this.l2) {
+				this.l1 -= minDelay * 20;
+				this.l2 -= minDelay * 20;
 			}
 
 			return minDelay; 
@@ -105,9 +105,9 @@ public class Synth
 	public void mixTone(int t, byte[] samples) {
 		if (this.tones[t] == null) return;
 
-		int sampleCount = this.tones[t].duration * 22050 / 1000;
-		int sampleOffset = this.tones[t].offset * 22050 / 1000;
-		int[] wave = this.tones[t].synthesize(sampleCount, this.tones[t].duration);
+		int sampleCount = this.tones[t].len * 22050 / 1000;
+		int sampleOffset = this.tones[t].pos * 22050 / 1000;
+		int[] wave = this.tones[t].synthesize(sampleCount, this.tones[t].len);
 		blend(samples, wave, sampleOffset, sampleCount);
 	}
 
@@ -126,6 +126,6 @@ public class Synth
 
 	public BufferedTrack getStream() {
 		final byte[] mix = mix();
-		return new BufferedTrack(22050, mix, start * 22050 / 1000, end * 22050 / 1000);
+		return new BufferedTrack(22050, mix, l1 * 22050 / 1000, l2 * 22050 / 1000);
 	}
 }

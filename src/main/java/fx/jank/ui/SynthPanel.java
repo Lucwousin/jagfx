@@ -23,6 +23,7 @@ import lombok.Getter;
 
 public class  SynthPanel extends JPanel
 {
+	@Getter
 	private Synth synth;
 	private int selectedTone = 0;
 
@@ -50,20 +51,15 @@ public class  SynthPanel extends JPanel
 		this.mixer = mixer;
 		this.synth = new Synth();
 
-		// todo: tone selector
-
-
-	}
-
-	void init() {
 		final Provider<Tone> toneProvider = this::getSelectedTone;
-		this.freqBaseCfg = createOscillatorSettings(this, () -> toneProvider.get().getFreqBase());
-		this.freqModCfg = createOscillatorSettings(this, () -> toneProvider.get().getFreqModRate());
-		this.ampModCfg = createOscillatorSettings(this, () -> toneProvider.get().getAmpModRate());
-		this.gapCfg = createGapSettings(this, () -> toneProvider.get().getGapOff());
+		this.freqBaseCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getFreqBase());
+		this.freqModCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getFreqModRate());
+		this.ampModCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getAmpModRate());
+		this.gapCfg = createGapSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getGapOn());
 		this.loopControls = new LoopControls(this);
 		this.mediaControls = new MediaControls(this);
-		this.waveGraph = new GraphView("Final Output", new WaveGraph(this::getBuffer));
+
+		this.waveGraph = new GraphView("Final Output", new WaveGraph(this::getSelectedTone));
 		this.frqEditor = EnvelopePanel.frqEditor(this, freqModCfg);
 		this.ampEditor = EnvelopePanel.ampEditor(this, ampModCfg);
 		this.gapEditor = EnvelopePanel.gapEditor(this, gapCfg, waveGraph);
@@ -73,6 +69,13 @@ public class  SynthPanel extends JPanel
 		add(center(), BorderLayout.CENTER);
 
 		add(bottom(), BorderLayout.SOUTH);
+
+	}
+
+	void init() {
+		// initialize
+		this.synth.getTones()[0] = Tone.defaultTone();
+		this.update(); // lol
 
 		/*this.graphPanel = new ToneGraphPanel(getSelectedTone());
 		add(graphPanel, BorderLayout.CENTER);*/
@@ -113,7 +116,8 @@ public class  SynthPanel extends JPanel
 	Tone getSelectedTone() {
 		if (synth == null) return null;
 		if (synth.getTones()[selectedTone] == null) {
-			synth.getTones()[selectedTone] = new Tone();
+			 return null;
+			//synth.getTones()[selectedTone] = new Tone();
 		}
 		return synth.getTones()[selectedTone];
 	}
@@ -157,9 +161,6 @@ public class  SynthPanel extends JPanel
 			Resampler rs = new Resampler(22050, sampleRate);
 			buffer = synth.getStream().resample(rs);
 		}
-		buffer.pos = loopControls.getPos();
-		buffer.l1 = loopControls.getL1();
-		buffer.l2 = loopControls.getL2();
 		buffer.loop = mediaControls.shouldLoop();
 		this.stream = RawPcmStream.createRawPcmStream(buffer, 100, 255);
 		this.stream.setNumLoops(mediaControls.getLoopCount());
@@ -195,5 +196,6 @@ public class  SynthPanel extends JPanel
 		this.frqEditor.revalidate();
 		this.ampEditor.revalidate();
 		this.gapEditor.revalidate();
+		this.loopControls.revalidate();
 	}
 }

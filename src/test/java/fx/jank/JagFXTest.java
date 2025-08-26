@@ -25,7 +25,7 @@ public class JagFXTest
 		store.load();
 		var s = store.getStorage();
 		Index index = store.getIndex(IndexType.SOUNDEFFECTS);
-		Archive ar = index.getArchive(370);
+		Archive ar = index.getArchive(3924);
 		byte[] cowData = ar.decompress(s.loadArchive(ar));
 
 

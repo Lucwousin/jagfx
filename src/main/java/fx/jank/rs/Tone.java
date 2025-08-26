@@ -37,17 +37,17 @@ public class Tone
 		};
 	}
 
-	private Envelope freqBase = new Envelope(50, 100, defaultEnvelopeData());
-	private Envelope ampBase = new Envelope(0, 100, defaultEnvelopeData());
+	private Envelope freqBase = new Envelope();// = new Envelope(50, 100, defaultEnvelopeData());
+	private Envelope ampBase = new Envelope();// = new Envelope(0, 100, defaultEnvelopeData());
 
-	private Envelope freqModRate = new Envelope(50, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
-	private Envelope freqModRange = new Envelope(0, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope freqModRate;// = new Envelope(50, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope freqModRange;// = new Envelope(0, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
 
-	private Envelope ampModRate = new Envelope(50, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
-	private Envelope ampModRange = new Envelope(0, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope ampModRate;// = new Envelope(50, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope ampModRange;// = new Envelope(0, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
 
-	private Envelope gapOff = new Envelope(0, 0, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
-	private Envelope gapOn = new Envelope(0, 0, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope gapOff;// = new Envelope(0, 0, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope gapOn; //= new Envelope(0, 0, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
 
 	private int[] harmonicVolumes = new int[5];
 	private int[] harmonicSemitones = new int[5];
@@ -59,8 +59,8 @@ public class Tone
 	private Filter filter = new Filter();
 	private Envelope transitionCurve = new Envelope();
 
-	int duration = 500;
-	int offset = 0;
+	int len = 500;
+	int pos = 0;
 
 	private int[] samples = new int[sampleRate * 10];
 	private int[] phases = new int[5];
@@ -120,9 +120,9 @@ public class Tone
 		reverbDelay = in.getVarUint16();
 		reverbVolume = in.getVarUint16();
 		log.info("reverb delay: {}, volume: {}", reverbDelay, reverbVolume);
-		duration = in.getUint16();
-		offset = in.getUint16();
-		log.info("Duration: {}, offset: {}", duration, offset);
+		len = in.getUint16();
+		pos = in.getUint16();
+		log.info("Duration: {}, offset: {}", len, pos);
 		filter.readFrom(in, transitionCurve);
 	}
 
@@ -239,7 +239,7 @@ public class Tone
 	}
 
 	void gap(int samples) {
-		if (gapOff == null || gapOff.waveFun == WaveFun.OFF.ordinal())
+		if (gapOn == null || gapOn.waveFun == WaveFun.OFF.ordinal())
 			return;
 
 		gapOff.reset();
@@ -249,12 +249,12 @@ public class Tone
 		boolean first = true;
 
 		for (int i = 0; i < samples; ++i) {
-			int release = gapOff.sample(samples);
-			int attack = gapOn.sample(samples);
+			int release = gapOn.sample(samples);
+			int attack = gapOff.sample(samples);
 			if (first) {
-				threshold = (release * (gapOff.max - gapOff.min) >> 8) + gapOff.min;
+				threshold = (release * (gapOn.max - gapOn.min) >> 8) + gapOn.min;
 			} else {
-				threshold = (attack * (gapOff.max - gapOff.min) >> 8) + gapOff.min;
+				threshold = (attack * (gapOn.max - gapOn.min) >> 8) + gapOn.min;
 			}
 
 			progress += 256;
@@ -360,8 +360,8 @@ public class Tone
 	}
 
 	public int[] synthAll(int sampleRate) {
-		int sampleCount = duration * sampleRate / 1000;
-		return synthesize(sampleCount, duration);
+		int sampleCount = len * sampleRate / 1000;
+		return synthesize(sampleCount, len);
 	}
 
 	public BufferedTrack getStream() {
@@ -374,6 +374,23 @@ public class Tone
 			}
 			bmix[i] = (byte)s;
 		}
-		return new BufferedTrack(sampleRate, bmix, 0, duration);
+		return new BufferedTrack(sampleRate, bmix, 0, len);
+	}
+
+	public static Tone defaultTone() {
+		Tone t = new Tone();
+		t.freqBase = new Envelope(50, 100, defaultEnvelopeData());
+		t.ampBase = new Envelope(0, 100, defaultEnvelopeData());
+		t.freqModRate = new Envelope(50, 100, defaultEnvelopeData());
+		t.freqModRange = new Envelope(0, 100, defaultEnvelopeData());
+
+		t.ampModRate = new Envelope(50, 100, defaultEnvelopeData());
+		t.ampModRange = new Envelope(0, 100, defaultEnvelopeData());
+		t.gapOff = new Envelope(0, 0, defaultEnvelopeData());
+		t.gapOn = new Envelope(0, 0, defaultEnvelopeData());
+		t.len = 500;
+		t.pos = 0;
+		t.getHarmonicVolumes()[0] = 50;
+		return t;
 	}
 }

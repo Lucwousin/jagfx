@@ -1,6 +1,8 @@
 package fx.jank.ui;
 
 import fx.jank.rs.Envelope;
+import fx.jank.rs.Tone;
+import fx.jank.rs.WaveFun;
 import javax.inject.Provider;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -36,9 +38,9 @@ class EnvelopeSettings extends JPanel
 			add(button);
 		}
 
-		this.buttons[envelope.get().getWaveFun()].setSelected(true);
-		this.min = new NumInput(envelope.get().getMin(), "Min " + unit, this::onMinMaxEvent);
-		this.max = new NumInput(envelope.get().getMax(), "Max " + unit, this::onMinMaxEvent);
+		this.buttons[0].setSelected(true);
+		this.min = new NumInput(-1, "Min " + unit, this::onMinMaxEvent);
+		this.max = new NumInput(-1, "Max " + unit, this::onMinMaxEvent);
 		add(min);
 		add(max);
 	}
@@ -63,7 +65,7 @@ class EnvelopeSettings extends JPanel
 			}
 		}
 		Envelope target = envelope.get();
-		if (target.getWaveFun() == index)
+		if (target == null || target.getWaveFun() == index)
 			return;
 		target.setWaveFun(index);
 		parent.update();
@@ -86,7 +88,7 @@ class EnvelopeSettings extends JPanel
 	}
 
 	public void revalidate() {
-		if (envelope == null)
+		if (envelope == null || envelope.get() == null)
 			return;
 		Envelope target = envelope.get();
 		this.min.setValue(target.getMin());

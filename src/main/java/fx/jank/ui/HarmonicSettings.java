@@ -57,7 +57,7 @@ public class HarmonicSettings extends JPanel
 		}
 
 		public void revalidate() {
-			if (parent == null)
+			if (parent == null || parent.getSelectedTone() == null)
 				return;
 			Tone tone = parent.getSelectedTone();
 			double semitones = tone.getHarmonicSemitones()[index] / 10.0d;
@@ -103,7 +103,7 @@ public class HarmonicSettings extends JPanel
 		}
 
 		public void revalidate() {
-			if (parent == null)
+			if (parent == null || parent.getSelectedTone() == null)
 				return;
 			Tone t = parent.getSelectedTone();
 			int vol = t.getReverbVolume();
