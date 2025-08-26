@@ -30,24 +30,18 @@ public class Tone
 		}
 	}
 
-	private static int[][] defaultEnvelopeData() {
-		return new int[][] {
-			{0 * 65535 / 5, 1 * 65535 / 5, 2 * 65535 / 5, 3 * 65535 / 5, 4 * 65535 / 5, 5 * 65535 / 5},
-			{32768, 32768, 32768, 32768, 32768, 32768}
-		};
-	}
 
-	private Envelope freqBase = new Envelope();// = new Envelope(50, 100, defaultEnvelopeData());
-	private Envelope ampBase = new Envelope();// = new Envelope(0, 100, defaultEnvelopeData());
+	private Envelope freqBase = new Envelope();
+	private Envelope ampBase = new Envelope();
 
-	private Envelope freqModRate;// = new Envelope(50, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
-	private Envelope freqModRange;// = new Envelope(0, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope freqModRate = new Envelope(); // note: these are not initialized normally but im dumb
+	private Envelope freqModRange = new Envelope(); // note: these are not initialized normally but im dumb
 
-	private Envelope ampModRate;// = new Envelope(50, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
-	private Envelope ampModRange;// = new Envelope(0, 100, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope ampModRate = new Envelope(); // note: these are not initialized normally but im dumb
+	private Envelope ampModRange = new Envelope(); // note: these are not initialized normally but im dumb
 
-	private Envelope gapOff;// = new Envelope(0, 0, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
-	private Envelope gapOn; //= new Envelope(0, 0, defaultEnvelopeData()); // note: these are not initialized normally but im dumb
+	private Envelope gapOff = new Envelope(); // note: these are not initialized normally but im dumb
+	private Envelope gapOn = new Envelope(); // note: these are not initialized normally but im dumb
 
 	private int[] harmonicVolumes = new int[5];
 	private int[] harmonicSemitones = new int[5];
@@ -379,17 +373,6 @@ public class Tone
 
 	public static Tone defaultTone() {
 		Tone t = new Tone();
-		t.freqBase = new Envelope(50, 100, defaultEnvelopeData());
-		t.ampBase = new Envelope(0, 100, defaultEnvelopeData());
-		t.freqModRate = new Envelope(50, 100, defaultEnvelopeData());
-		t.freqModRange = new Envelope(0, 100, defaultEnvelopeData());
-
-		t.ampModRate = new Envelope(50, 100, defaultEnvelopeData());
-		t.ampModRange = new Envelope(0, 100, defaultEnvelopeData());
-		t.gapOff = new Envelope(0, 0, defaultEnvelopeData());
-		t.gapOn = new Envelope(0, 0, defaultEnvelopeData());
-		t.len = 500;
-		t.pos = 0;
 		t.getHarmonicVolumes()[0] = 50;
 		return t;
 	}

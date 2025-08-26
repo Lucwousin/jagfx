@@ -1,7 +1,5 @@
 package fx.jank.ui;
 
-import fx.jank.rs.Envelope;
-import fx.jank.rs.WaveFun;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
@@ -35,37 +33,31 @@ public class EnvelopePanel extends JPanel
 		switch (type) {
 			case FREQUENCY:
 				graphs[1] = new EnvelopeEditor(parent, "Freq Modulation rate",
-					() -> parent.getSelectedTone() == null ? null : parent.getSelectedTone().getFreqModRate(),
-					() -> parent.getSelectedTone() != null && envelopeActive(parent.getSelectedTone().getFreqModRate()));
+					() -> parent.getSelectedTone().getFreqModRate(),
+					() -> parent.getSelectedTone().getFreqModRate().getWaveFun() != 0);
 				graphs[2] = new EnvelopeEditor(parent, "Freq Modulation range",
-					() -> parent.getSelectedTone() == null ? null : parent.getSelectedTone().getFreqModRange(),
-					() -> parent.getSelectedTone() != null && envelopeActive(parent.getSelectedTone().getFreqModRate()));
+					() -> parent.getSelectedTone().getFreqModRange(),
+					() -> parent.getSelectedTone().getFreqModRate().getWaveFun() != 0);
 				break;
 			case AMPLITUDE:
 				graphs[1] = new EnvelopeEditor(parent, "Amp Modulation rate",
-					() -> parent.getSelectedTone() == null ? null : parent.getSelectedTone().getAmpModRate(),
-					() -> parent.getSelectedTone() != null && envelopeActive(parent.getSelectedTone().getAmpModRate()));
+					() -> parent.getSelectedTone().getAmpModRate(),
+					() -> parent.getSelectedTone().getAmpModRate().getWaveFun() != 0);
 				graphs[2] = new EnvelopeEditor(parent, "Amp Modulation range",
-					() -> parent.getSelectedTone() == null ? null : parent.getSelectedTone().getAmpModRange(),
-					() -> parent.getSelectedTone() != null && envelopeActive(parent.getSelectedTone().getAmpModRate()));
+					() -> parent.getSelectedTone().getAmpModRange(),
+					() -> parent.getSelectedTone().getAmpModRate().getWaveFun() != 0);
 				break;
 			case GAP:
 				graphs[1] = new EnvelopeEditor(parent, "Gap off",
-					() -> parent.getSelectedTone() == null ? null : parent.getSelectedTone().getGapOff(),
-					() -> parent.getSelectedTone() != null && envelopeActive(parent.getSelectedTone().getGapOn()));
+					() -> parent.getSelectedTone().getGapOff(),
+					() -> parent.getSelectedTone().getGapOn().getWaveFun() != 0);
 				graphs[2] = new EnvelopeEditor(parent, "Gap on",
-					() -> parent.getSelectedTone() == null ? null : parent.getSelectedTone().getGapOn(),
-					() -> parent.getSelectedTone() != null && envelopeActive(parent.getSelectedTone().getGapOn()));
+					() -> parent.getSelectedTone().getGapOn(),
+					() -> parent.getSelectedTone().getGapOn().getWaveFun() != 0);
 				break;
 		}
 		add(graphs[1]);
 		add(graphs[2]);
-	}
-
-	private static boolean envelopeActive(Envelope e) {
-		if (e == null)
-			return false;
-		return e.getWaveFun() != WaveFun.OFF.ordinal();
 	}
 
 	static EnvelopePanel frqEditor(SynthPanel parent, EnvelopeSettings settings) {

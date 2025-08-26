@@ -73,8 +73,6 @@ public class  SynthPanel extends JPanel
 	}
 
 	void init() {
-		// initialize
-		this.synth.getTones()[0] = Tone.defaultTone();
 		this.update(); // lol
 
 		/*this.graphPanel = new ToneGraphPanel(getSelectedTone());
@@ -116,8 +114,7 @@ public class  SynthPanel extends JPanel
 	Tone getSelectedTone() {
 		if (synth == null) return null;
 		if (synth.getTones()[selectedTone] == null) {
-			 return null;
-			//synth.getTones()[selectedTone] = new Tone();
+			synth.getTones()[selectedTone] = new Tone();
 		}
 		return synth.getTones()[selectedTone];
 	}

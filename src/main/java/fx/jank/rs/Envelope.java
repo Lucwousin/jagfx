@@ -16,9 +16,9 @@ public class Envelope
 	private int[] y = {0, 65535};
 
 	// ie minHz
-	int min;
+	int min = 0;
 	// ie maxHz
-	int max;
+	int max = 100;
 	// waveform (off, sqr, sin, saw, noise)
 	int waveFun = 0;
 	private int sampleLimit;
