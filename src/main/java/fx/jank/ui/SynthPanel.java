@@ -12,17 +12,23 @@ import static fx.jank.ui.EnvelopeSettings.createGapSettings;
 import static fx.jank.ui.EnvelopeSettings.createOscillatorSettings;
 import fx.jank.ui.components.WaveGraph;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import javax.inject.Provider;
+import java.util.function.Supplier;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import lombok.Getter;
 
-public class  SynthPanel extends JPanel
-{
+public class  SynthPanel extends JPanel {
+	private static final int PAD = 8;
+
 	@Getter
 	private Synth synth;
 	private int selectedTone = 0;
@@ -43,8 +49,8 @@ public class  SynthPanel extends JPanel
 	private EnvelopePanel gapEditor;
 	private ModeSelector modeSelector;
 	private JPanel centerContainer;
-	private JPanel mainPanel;
-	private JPanel filterPanel;
+	private Container mainPanel;
+	private Container filterPanel;
 	private HarmonicSettings harmonicSettings = new HarmonicSettings(this);
 
 	@Getter
@@ -57,11 +63,11 @@ public class  SynthPanel extends JPanel
 		this.mixer = mixer;
 		this.synth = new Synth();
 
-		final Provider<Tone> toneProvider = this::getSelectedTone;
+		final Supplier<Tone> toneProvider = this::getSelectedTone;
 		this.freqBaseCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getFreqBase());
 		this.freqModCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getFreqModRate());
 		this.ampModCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getAmpModRate());
-		this.gapCfg = createGapSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getGapOn());
+		this.gapCfg = createGapSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getGapOff());
 		this.loopControls = new LoopControls(this);
 		this.mediaControls = new MediaControls(this);
 
@@ -74,7 +80,7 @@ public class  SynthPanel extends JPanel
 
 		this.modeSelector = new ModeSelector(this);
 		this.mainPanel = buildMainPanel();
-		this.filterPanel = buildFilterPanel();
+		this.filterPanel = new FilterPanel(this);
 		this.filterPanel.setVisible(false);
 
 		add(buildCenter(), BorderLayout.CENTER);
@@ -90,11 +96,18 @@ public class  SynthPanel extends JPanel
 	}
 
 	private Container leftContainer() {
-		Container leftContainer = new JPanel();
+		JPanel leftContainer = new JPanel();
 		leftContainer.setLayout(new BoxLayout(leftContainer, BoxLayout.Y_AXIS));
 		leftContainer.add(freqBaseCfg);
 		leftContainer.add(loopControls);
 		leftContainer.add(mediaControls);
+
+		leftContainer.setBorder(BorderFactory.createEmptyBorder(PAD, PAD, PAD, PAD));
+		int w = 0;
+		for (var c : leftContainer.getComponents()) {
+			w = Math.max(w, c.getWidth());
+		}
+		leftContainer.setSize(w, leftContainer.getHeight());
 		//todo: truewave? wtf is that
 		return leftContainer;
 	}
@@ -106,22 +119,19 @@ public class  SynthPanel extends JPanel
 			new Insets(0, 0, 0, 0), 50, 5);
 	}
 
-	private JPanel buildMainPanel() {
-		JPanel center = new JPanel(new GridBagLayout());
+	private Container buildMainPanel() {
+		Box center = Box.createVerticalBox();
 		center.add(frqEditor, chelper(0, 0, 3));
 		center.add(ampEditor, chelper(0, 1, 3));
 		center.add(gapEditor, chelper(0, 2, 3));
 		return center;
 	}
-	private JPanel buildFilterPanel() {
-		JPanel filter = new JPanel(new GridBagLayout());
-		// todo
-		return filter;
-	}
-	private JPanel buildCenter() {
+
+	private Container buildCenter() {
 		centerContainer = new JPanel();
 		centerContainer.add(mainPanel);
 		centerContainer.add(filterPanel);
+		centerContainer.setBorder(BorderFactory.createLineBorder(Color.white));
 		return centerContainer;
 	}
 
@@ -134,7 +144,7 @@ public class  SynthPanel extends JPanel
 		return bottom;
 	}
 
-	Tone getSelectedTone() {
+	public Tone getSelectedTone() {
 		if (synth == null) return null;
 		if (synth.getTones()[selectedTone] == null) {
 			synth.getTones()[selectedTone] = new Tone();
@@ -217,6 +227,7 @@ public class  SynthPanel extends JPanel
 		this.ampEditor.revalidate();
 		this.gapEditor.revalidate();
 		this.loopControls.revalidate();
+		this.filterPanel.revalidate();
 	}
 
 	public void revalidate() {
@@ -224,5 +235,6 @@ public class  SynthPanel extends JPanel
 			return;
 		mainPanel.setVisible(modeSelector.displayMain());
 		filterPanel.setVisible(modeSelector.displayFilter());
+		this.filterPanel.revalidate();;
 	}
 }

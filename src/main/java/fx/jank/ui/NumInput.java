@@ -1,6 +1,8 @@
 package fx.jank.ui;
 
-import javax.swing.BoxLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -13,14 +15,23 @@ class NumInput extends JPanel
 	final JSpinner spinner;
 
 	NumInput(int value, String label, ChangeListener action) {
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setBorder(BorderFactory.createLineBorder(Color.WHITE));
 		var model = new SpinnerNumberModel(value, -65536, 65535, 1);
 		this.spinner = new JSpinner(model);
+
 		this.label = new JLabel(label);
 		this.label.setLabelFor(spinner);
 		this.spinner.addChangeListener(action);
-		add(this.label);
-		add(this.spinner);
+
+		var container = new JPanel();
+		container.setLayout(new GridLayout(0, 1, 2, 2));
+		container.add(this.label);
+		container.add(this.spinner);
+		add(container);
+
+		// and width
+		var editor = (JSpinner.NumberEditor) this.spinner.getEditor();
+		editor.getTextField().setColumns(5);
 	}
 
 	int getValue() {

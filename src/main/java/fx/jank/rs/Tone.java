@@ -92,12 +92,12 @@ public class Tone
 		}
 		if (in.tryGet())
 		{
-			gapOn = new Envelope();
-			gapOn.readFrom(in);
 			gapOff = new Envelope();
 			gapOff.readFrom(in);
-			log.info("gapOn {}", gapOn);
-			log.info("gapOff {}", gapOff);
+			gapOn = new Envelope();
+			gapOn.readFrom(in);
+			log.info("gapOn {}", gapOff);
+			log.info("gapOff {}", gapOn);
 		}
 
 
@@ -233,22 +233,22 @@ public class Tone
 	}
 
 	void gap(int samples) {
-		if (gapOn == null || gapOn.waveFun == WaveFun.OFF.ordinal())
+		if (gapOff == null || gapOff.waveFun == WaveFun.OFF.ordinal())
 			return;
 
-		gapOff.reset();
 		gapOn.reset();
+		gapOff.reset();
 		int progress = 0;
 		int threshold;
 		boolean first = true;
 
 		for (int i = 0; i < samples; ++i) {
-			int release = gapOn.sample(samples);
-			int attack = gapOff.sample(samples);
+			int release = gapOff.sample(samples);
+			int attack = gapOn.sample(samples);
 			if (first) {
-				threshold = (release * (gapOn.max - gapOn.min) >> 8) + gapOn.min;
+				threshold = (release * (gapOff.max - gapOff.min) >> 8) + gapOff.min;
 			} else {
-				threshold = (attack * (gapOn.max - gapOn.min) >> 8) + gapOn.min;
+				threshold = (attack * (gapOff.max - gapOff.min) >> 8) + gapOff.min;
 			}
 
 			progress += 256;
@@ -274,26 +274,26 @@ public class Tone
 	}
 
 	void filter(int samples) {
-		if (filter.bands[0] <= 0 && filter.bands[1] <= 0) {
+		if (filter.orderN[0] <= 0 && filter.orderN[1] <= 0) {
 			return;
 		}
 
 		transitionCurve.reset();
 		int filterMix = transitionCurve.sample(samples + 1);
-		int filterStart = filter.compute(0, (float)filterMix / 65536.0F);
-		int filterLength = filter.compute(1, (float)filterMix / 65536.0F);
-		if (samples < filterStart + filterLength) {
+		int f1Order = filter.compute(0, (float)filterMix / 65536.0F);
+		int f2Order = filter.compute(1, (float)filterMix / 65536.0F);
+		if (samples < f1Order + f2Order) {
 			return;
 		}
 
 		int i;
-		int n = Math.min(filterLength, samples - filterStart);
+		int n = Math.min(f2Order, samples - f1Order);
 		for (i = 0; i < n; i++)
 		{
-			int sample = (int)((long)this.samples[i + filterStart] * (long)filter.pregainInt >> 16);
+			int sample = (int) (((long) this.samples[i + f1Order] * (long) filter.linearGainInt) >> 16);
 
-			for (int j = 0; j < filterStart; ++j) {
-				sample += (int)((long)this.samples[i + filterStart - 1 - j] * (long) filter.coefficients[0][j] >> 16);
+			for (int j = 0; j < f1Order; ++j) {
+				sample += (int)((long)this.samples[i + f1Order - 1 - j] * (long) filter.coefficients[0][j] >> 16);
 			}
 
 			for (int j = 0; j < i; ++j) {
@@ -306,18 +306,18 @@ public class Tone
 
 		boolean var21 = true;
 		for (n = 128; var21; n += 128) {
-			if (n > samples - filterStart) {
-				n = samples - filterStart;
+			if (n > samples - f1Order) {
+				n = samples - f1Order;
 			}
 
 			while (i < n) {
-				int sample = (int)((long)this.samples[i + filterStart] * (long)filter.pregainInt >> 16);
+				int sample = (int)((long)this.samples[i + f1Order] * (long)filter.linearGainInt >> 16);
 
-				for (int j = 0; j < filterStart; ++j) {
-					sample += (int)((long)this.samples[i + filterStart - 1 - j] * (long)filter.coefficients[0][j] >> 16);
+				for (int j = 0; j < f1Order; ++j) {
+					sample += (int)((long)this.samples[i + f1Order - 1 - j] * (long)filter.coefficients[0][j] >> 16);
 				}
 
-				for (int j = 0; j < filterLength; ++j) {
+				for (int j = 0; j < f2Order; ++j) {
 					sample -= (int)((long)this.samples[i - 1 - j] * (long)filter.coefficients[1][j] >> 16);
 				}
 
@@ -326,23 +326,23 @@ public class Tone
 				++i;
 			}
 
-			if (i >= samples - filterStart) {
+			if (i >= samples - f1Order) {
 				break;
 			}
-			filterStart = filter.compute(0, (float) filterMix / 65536.0F);
-			filterLength = filter.compute(1, (float) filterMix / 65536.0F);
+			f1Order = filter.compute(0, (float) filterMix / 65536.0F);
+			f2Order = filter.compute(1, (float) filterMix / 65536.0F);
 		}
 
 		while (i < samples)
 		{
 			int j = 0;
 
-			for (int var18 = i + filterStart - samples; var18 < filterStart; ++var18)
+			for (int var18 = i + f1Order - samples; var18 < f1Order; ++var18)
 			{
-				j += (int) ((long) this.samples[i + filterStart - 1 - var18] * (long) filter.coefficients[0][var18] >> 16);
+				j += (int) ((long) this.samples[i + f1Order - 1 - var18] * (long) filter.coefficients[0][var18] >> 16);
 			}
 
-			for (int var18 = 0; var18 < filterLength; ++var18)
+			for (int var18 = 0; var18 < f2Order; ++var18)
 			{
 				j -= (int) ((long) this.samples[i - 1 - var18] * (long) filter.coefficients[1][var18] >> 16);
 			}

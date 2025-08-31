@@ -1,5 +1,8 @@
 package fx.jank.ui;
 
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
@@ -11,12 +14,10 @@ public class EnvelopePanel extends JPanel
 		GAP
 	}
 
-	private final JPanel comboPanel = new JPanel();
 	private final GraphView[] graphs = new GraphView[3];
 
 	private EnvelopePanel(SynthPanel parent, EnvelopeSettings settings, Type type, GraphView view) {
-		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-
+		setLayout(new GridLayout(1, 0, 15, 0));
 		if (view == null) {
 			view = type == Type.FREQUENCY ?
 				new EnvelopeEditor(parent, "Freq Base",
@@ -26,10 +27,11 @@ public class EnvelopePanel extends JPanel
 					() -> parent.getSelectedTone().getAmpBase(),
 					() -> true);
 		}
+		JPanel container = new JPanel();
 		graphs[0] = view;
-		comboPanel.add(view);
-		comboPanel.add(settings);
-		add(comboPanel);
+		container.add(view);
+		container.add(settings);
+		add(container);
 		switch (type) {
 			case FREQUENCY:
 				graphs[1] = new EnvelopeEditor(parent, "Freq Modulation rate",
@@ -50,14 +52,18 @@ public class EnvelopePanel extends JPanel
 			case GAP:
 				graphs[1] = new EnvelopeEditor(parent, "Gap off",
 					() -> parent.getSelectedTone().getGapOff(),
-					() -> parent.getSelectedTone().getGapOn().getWaveFun() != 0);
+					() -> parent.getSelectedTone().getGapOff().getWaveFun() != 0);
 				graphs[2] = new EnvelopeEditor(parent, "Gap on",
 					() -> parent.getSelectedTone().getGapOn(),
-					() -> parent.getSelectedTone().getGapOn().getWaveFun() != 0);
+					() -> parent.getSelectedTone().getGapOff().getWaveFun() != 0);
 				break;
 		}
-		add(graphs[1]);
-		add(graphs[2]);
+		container = new JPanel();
+		container.add(graphs[1]);
+		add(container);
+		container = new JPanel();
+		container.add(graphs[2]);
+		add(container);
 	}
 
 	static EnvelopePanel frqEditor(SynthPanel parent, EnvelopeSettings settings) {

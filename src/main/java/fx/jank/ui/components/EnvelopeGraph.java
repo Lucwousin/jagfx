@@ -3,12 +3,12 @@ package fx.jank.ui.components;
 import fx.jank.rs.Envelope;
 import java.awt.Color;
 import java.awt.Graphics;
-import javax.inject.Provider;
+import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class EnvelopeGraph extends Graph {
-	final Provider<Envelope> targetProvider;
+	final Supplier<Envelope> targetProvider;
 
 	@Override
 	protected void paintGraph(Graphics g) {

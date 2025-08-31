@@ -2,6 +2,8 @@ package fx.jank.ui;
 
 import fx.jank.rs.Synth;
 import fx.jank.rs.Tone;
+import java.awt.Dimension;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -14,6 +16,7 @@ class LoopControls extends JPanel
 	private final NumInput pos = new NumInput(0, "Pos ms", this::onChange);
 	private final NumInput l1 = new NumInput(0, "L1 ms", this::onChange);
 	private final NumInput l2 = new NumInput(0, "L2 ms", this::onChange);
+	private final NumInput[] children = {len, pos, l1, l2};
 
 	LoopControls(SynthPanel parent) {
 		this.parent = parent;
@@ -21,9 +24,14 @@ class LoopControls extends JPanel
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		add(len);
+		this.add(Box.createVerticalStrut(1));
 		add(pos);
+		this.add(Box.createVerticalStrut(1));
 		add(l1);
+		this.add(Box.createVerticalStrut(1));
 		add(l2);
+		add(Box.createVerticalGlue());
+		updateSize();
 	}
 
 	private void onChange(ChangeEvent e) {
@@ -71,5 +79,23 @@ class LoopControls extends JPanel
 		if (l2.getValue() != s.getL2()) {
 			l2.setValue(s.getL2());
 		}
+	}
+
+	private void updateSize() {
+		int width = 0;
+		int height = 0;
+
+		for (var c : children) {
+			var s = c.getMinimumSize();
+			width = Math.max(width, s.width);
+			height += s.height;
+		}
+		for (var c : children) {
+			var s = c.getMinimumSize();
+			var newSize = new Dimension(width, s.height);
+			c.setMaximumSize(newSize);
+			c.setMinimumSize(newSize);
+		}
+		this.setMinimumSize(new Dimension(width, height));
 	}
 }

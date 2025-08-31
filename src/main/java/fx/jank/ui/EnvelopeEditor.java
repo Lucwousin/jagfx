@@ -4,12 +4,12 @@ import fx.jank.rs.Envelope;
 import fx.jank.ui.components.EnvelopeGraph;
 import java.awt.event.MouseEvent;
 import java.util.function.BooleanSupplier;
-import javax.inject.Provider;
+import java.util.function.Supplier;
 import javax.swing.event.MouseInputAdapter;
 
 class EnvelopeEditor extends GraphView {
 	private final SynthPanel parent;
-	private final Provider<Envelope> targetProvider;
+	private final Supplier<Envelope> targetProvider;
 	private final BooleanSupplier checkActive;
 	private final MouseInputAdapter inputListener = new MouseInputAdapter() {
 		private int selectedIndex = -1;
@@ -109,7 +109,7 @@ class EnvelopeEditor extends GraphView {
 
 	};
 
-	EnvelopeEditor(SynthPanel daddy, String name, Provider<Envelope> targetProvider, BooleanSupplier checkActive) {
+	EnvelopeEditor(SynthPanel daddy, String name, Supplier<Envelope> targetProvider, BooleanSupplier checkActive) {
 		super(name, new EnvelopeGraph(targetProvider));
 		this.parent = daddy;
 		this.targetProvider = targetProvider;

@@ -65,7 +65,7 @@ public class Envelope
 		}
 	}
 
-	void reset()
+	public void reset()
 	{
 		sampleLimit = 0;
 		band = 0;
@@ -74,7 +74,7 @@ public class Envelope
 		sampleIndex = 0;
 	}
 
-	int sample(int n)
+	public int sample(int n)
 	{
 		if (sampleIndex >= sampleLimit)
 		{

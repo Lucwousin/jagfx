@@ -40,7 +40,7 @@ public class HarmonicSettings extends JPanel
 				parent.update();
 			});
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-			add(new JLabel("Harmonic " + index));
+			add(new JLabel("Harmonic " + (index + 1)));
 
 			JPanel container = new JPanel();
 			container.add(new JLabel("Semi:"));
