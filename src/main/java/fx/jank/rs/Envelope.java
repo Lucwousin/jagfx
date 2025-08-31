@@ -136,4 +136,25 @@ public class Envelope
 		bands++;
 		return i;
 	}
+
+	public void deletePoint(int index) {
+		if (bands == 2)
+			return;
+		if (index == 0) {
+			y[0] = y[1];
+			index = 1;
+		} else if (index == bands - 1) {
+			y[bands - 1] = y[bands - 2];
+			index = bands - 1;
+		}
+		int[] newX = new int[bands - 1];
+		int[] newY = new int[bands - 1];
+		System.arraycopy(x, 0, newX, 0, index);
+		System.arraycopy(y, 0, newY, 0, index);
+		System.arraycopy(x, index + 1, newX, index, bands - index - 1);
+		System.arraycopy(y, index + 1, newY, index, bands - index - 1);
+		x = newX;
+		y = newY;
+		bands--;
+	}
 }

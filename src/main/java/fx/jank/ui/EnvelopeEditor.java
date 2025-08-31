@@ -21,9 +21,6 @@ class EnvelopeEditor extends GraphView {
 		public void mousePressed(MouseEvent e) {
 			if (e.isControlDown() && selectedIndex == -1) {
 				createPoint(e);
-			} else if (e.getButton() == MouseEvent.BUTTON2) {
-				updateSelectedIndex(e);
-				// todo: delete point
 			} else {
 				updateSelectedIndex(e);
 			}
@@ -32,9 +29,13 @@ class EnvelopeEditor extends GraphView {
 		@Override
 		public void mouseReleased(MouseEvent e) {
 			if (selectedIndex != -1) {
-				movePoint(e.getX(), e.getY(), e.getComponent().getWidth(), e.getComponent().getHeight());
-				parent.update();
+				if (e.getButton() == MouseEvent.BUTTON3) {
+					deleteSelected();
+				} else {
+					movePoint(e.getX(), e.getY(), e.getComponent().getWidth(), e.getComponent().getHeight());
+				}
 				graph.repaint();
+				parent.update();
 				selectedIndex = -1;
 			}
 		}
@@ -46,8 +47,8 @@ class EnvelopeEditor extends GraphView {
 			}
 
 			movePoint(e.getX(), e.getY(), e.getComponent().getWidth(), e.getComponent().getHeight());
-			parent.update();
 			graph.repaint();
+			parent.update();
 		}
 
 		private void createPoint(MouseEvent e) {
@@ -57,6 +58,16 @@ class EnvelopeEditor extends GraphView {
 			int newY = 65535 - my * 65535 / ch;
 			Envelope target = targetProvider.get();
 			selectedIndex = target.insertPoint(newX, newY);
+			graph.repaint();
+			parent.update();
+		}
+
+		private void deleteSelected() {
+			if (selectedIndex != -1)
+				targetProvider.get().deletePoint(selectedIndex);
+			selectedIndex = -1;
+			graph.repaint();
+			parent.update();
 		}
 
 		private void movePoint(int mx, int my, int cw, int ch) {
