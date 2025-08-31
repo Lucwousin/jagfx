@@ -14,9 +14,6 @@ class EnvelopeEditor extends GraphView {
 	private final MouseInputAdapter inputListener = new MouseInputAdapter() {
 		private int selectedIndex = -1;
 
-		// todo: ui scaling bs
-		//todo : lock first and last index to edges of envelope
-		// todo: Update parent on change!
 		@Override
 		public void mousePressed(MouseEvent e) {
 			if (e.isControlDown() && selectedIndex == -1) {
