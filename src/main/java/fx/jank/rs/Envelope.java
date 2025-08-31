@@ -117,4 +117,23 @@ public class Envelope
 		}
 		return strb.toString();
 	}
+	
+	public int insertPoint(int newX, int newY) {
+		int i = 0;
+		while (i++ < bands - 1)
+			if (x[i] > newX)
+				break;
+		int[] newXs = new int[bands + 1];
+		int[] newYs = new int[bands + 1];
+		System.arraycopy(x, 0, newXs, 0, i);
+		System.arraycopy(y, 0, newYs, 0, i);
+		newXs[i] = newX;
+		newYs[i] = newY;
+		System.arraycopy(x, i, newXs, i + 1, bands - i);
+		System.arraycopy(y, i, newYs, i + 1, bands - i);
+		x = newXs;
+		y = newYs;
+		bands++;
+		return i;
+	}
 }

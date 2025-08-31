@@ -19,8 +19,8 @@ class EnvelopeEditor extends GraphView {
 		// todo: Update parent on change!
 		@Override
 		public void mousePressed(MouseEvent e) {
-			if (e.isControlDown()) {
-				// todo: insert new point
+			if (e.isControlDown() && selectedIndex == -1) {
+				createPoint(e);
 			} else if (e.getButton() == MouseEvent.BUTTON2) {
 				updateSelectedIndex(e);
 				// todo: delete point
@@ -48,6 +48,15 @@ class EnvelopeEditor extends GraphView {
 			movePoint(e.getX(), e.getY(), e.getComponent().getWidth(), e.getComponent().getHeight());
 			parent.update();
 			graph.repaint();
+		}
+
+		private void createPoint(MouseEvent e) {
+			int mx = e.getX(); int my = e.getY();
+			int cw = e.getComponent().getWidth(); int ch = e.getComponent().getHeight();
+			int newX = mx * 65535 / cw;
+			int newY = 65535 - my * 65535 / ch;
+			Envelope target = targetProvider.get();
+			selectedIndex = target.insertPoint(newX, newY);
 		}
 
 		private void movePoint(int mx, int my, int cw, int ch) {
