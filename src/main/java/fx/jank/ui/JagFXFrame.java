@@ -11,7 +11,16 @@ import lombok.Getter;
 
 public class JagFXFrame extends JFrame {
 
-	public static void create() {
+	public static void create(int initialId) {
+		doUiStuff();
+
+		var frame = new JagFXFrame();
+		frame.init();
+		SynthLoader.loadCache(frame.panel, initialId);
+		frame.open();
+	}
+
+	private static void doUiStuff() {
 		UIManager.put("Panel.background", Color.DARK_GRAY);
 		UIManager.put("Button.foreground", Color.WHITE);
 		UIManager.put("ToggleButton.background", Color.GRAY);
@@ -23,11 +32,6 @@ public class JagFXFrame extends JFrame {
 		UIManager.put("FormattedTextField.background", Color.BLACK);
 		UIManager.put("FormattedTextField.foreground", Color.WHITE);
 		UIManager.put("FormattedTextField.border", Color.WHITE);
-
-		var frame = new JagFXFrame();
-		frame.init();
-		SynthLoader.loadCache(frame.panel, 370);
-		frame.open();
 	}
 
 

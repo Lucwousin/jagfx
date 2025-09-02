@@ -22,7 +22,7 @@ public class SynthLoader {
 
 	static {
 		try {
-			store = new Store(new File("C:\\Users\\Lucas\\.runelite\\jagexcache\\oldschool-beta\\LIVE"));
+			store = new Store(new File(System.getProperty("user.home") + "\\.runelite\\jagexcache\\oldschool\\LIVE"));
 			store.load();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
