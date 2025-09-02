@@ -24,6 +24,8 @@ If you search for `todo` in this project you'll probably also find more stuff to
 _Screenshot from Ian Taylor on twitter (The cow death sound, annoyingly with some parameters changed from the actual sound)_
 ![A screenshot of my interpretation (cow too)](screenshots/cow_screenshot.png)
 _Comparison, same parameters modified_
+![A screenshot of actual cow](screenshots/actual_cow.png)
+_This is what it actually is like!_
 
 ## Credits
 
