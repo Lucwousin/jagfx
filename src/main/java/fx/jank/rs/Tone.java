@@ -8,16 +8,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.antlr.v4.runtime.misc.Pair;
 
 @NoArgsConstructor
 @ToString
 @Getter
 @Setter
 @Slf4j
-public class Tone
-{
-	private static final int[] noise = new int[32768];
-	private static final int[] sine = new int[32768];
+public class Tone {
+	// total resolution
+	public static final int ENVELOPE_RES = 65536;
+	public static final int ENVELOPE_MAG = ENVELOPE_RES / 2;
+	private static final int MAX_TONE_LEN_SEC = 10;
+	private static final double SEMI_RATIO = 1.0057929410678534; // 2^1/12
+	private static final int[] noise = new int[ENVELOPE_MAG];
+	private static final int[] sine = new int[ENVELOPE_MAG];
 
 	static {
 		Random r = new Random(0L);
@@ -43,9 +48,9 @@ public class Tone
 	private Envelope gapOff = new Envelope(); // note: these are not initialized normally but im dumb
 	private Envelope gapOn = new Envelope(); // note: these are not initialized normally but im dumb
 
-	private int[] harmonicVolumes = new int[5];
-	private int[] harmonicSemitones = new int[5];
-	private int[] harmonicDelays = new int[5];
+	private int[] volInput = new int[5];
+	private int[] semiInput = new int[5];
+	private int[] delInput = new int[5];
 
 	private int reverbDelay = 0;
 	private int reverbVolume = 100;
@@ -56,12 +61,12 @@ public class Tone
 	int len = 500;
 	int pos = 0;
 
-	private int[] samples = new int[sampleRate * 10];
-	private int[] phases = new int[5];
-	private int[] delays = new int[5];
-	private int[] ampSteps = new int[5];
-	private int[] freqSteps = new int[5];
-	private int[] freqBaseSteps = new int[5];
+	private int[] samples = new int[sampleRate * MAX_TONE_LEN_SEC];
+	private int[] oscPhase = new int[5];
+	private int[] oscDelay = new int[5];
+	private int[] oscVolum = new int[5];
+	private int[] oscStep = new int[5];
+	private int[] oscBase = new int[5];
 
 	void readFrom(ByteStream in)
 	{
@@ -106,10 +111,10 @@ public class Tone
 			if (vol == 0)
 				break;
 
-			harmonicVolumes[i] = vol;
-			harmonicSemitones[i] = in.getVarInt16();
-			harmonicDelays[i] = in.getVarUint16();
-			log.info("harmonic osc {}: vol: {}, semi: {}, del: {}", i, harmonicVolumes[i], (float)harmonicSemitones[i]/10, harmonicDelays[i]);
+			volInput[i] = vol;
+			semiInput[i] = in.getVarInt16();
+			delInput[i] = in.getVarUint16();
+			log.info("harmonic osc {}: vol: {}, semi: {}, del: {}", i, volInput[i], (float) semiInput[i]/10, delInput[i]);
 		}
 		reverbDelay = in.getVarUint16();
 		reverbVolume = in.getVarUint16();
@@ -127,39 +132,30 @@ public class Tone
 		}
 
 		double sampleRate = samples / (ms + 0.0D); // mHz
+		double scale = 32.768 / sampleRate;
 		freqBase.reset();
 		ampBase.reset();
-		int freqModStep = 0;
-		int freqModBase = 0;
-		int freqModPhase = 0;
-		if (freqModRate != null && freqModRate.waveFun != WaveFun.OFF.ordinal()) {
-			freqModRate.reset();
-			freqModRange.reset();
-			freqModStep = (int)((freqModRate.max - freqModRate.min) * 32.768D / sampleRate);
-			freqModBase = (int)(freqModRate.min * 32.768D / sampleRate);
-		}
 
-		int ampModStep = 0;
-		int ampModBase = 0;
-		int ampModPhase = 0;
-		if (ampModRate != null && ampModRate.waveFun != WaveFun.OFF.ordinal()) {
-			ampModRate.reset();
-			ampModRange.reset();
-			ampModStep = (int)((ampModRate.max - ampModRate.min) * 32.768D / sampleRate);
-			ampModBase = (int)(ampModRate.min * 32.768D / sampleRate);
-		}
+		Pair<Integer, Integer> tmp;
+		tmp = this.calcModStep(freqModRate, freqModRange, scale);
+		int freqModStep = tmp.a;
+		int freqModBase = tmp.b;
+
+		tmp = this.calcModStep(ampModRate, ampModRange, scale);
+		int ampModStep = tmp.a;
+		int ampModBase = tmp.b;
 
 		for (int i = 0; i < 5; ++i) {
-			if (harmonicVolumes[i] != 0) {
-				phases[i] = 0;
-				delays[i] = (int)(harmonicDelays[i] * sampleRate);
-				ampSteps[i] = (harmonicVolumes[i] * 16384) / 100;
-				freqSteps[i] = (int)((freqBase.max - freqBase.min) * 32.768D * Math.pow(1.0057929410678534D, harmonicSemitones[i]) / sampleRate);
-				freqBaseSteps[i] = (int)(freqBase.min * 32.768D / sampleRate);
+			if (volInput[i] != 0) {
+				oscPhase[i] = 0;
+				oscDelay[i] = (int)(delInput[i] * sampleRate);
+				oscVolum[i] = (volInput[i] * 16384) / 100;
+				oscStep[i] = (int)(scale * (freqBase.max - freqBase.min) * Math.pow(SEMI_RATIO, semiInput[i]));
+				oscBase[i] = (int)(scale * (freqBase.min));
 			}
 		}
 
-		runOscillators(samples, freqModStep, freqModBase, freqModPhase, ampModStep, ampModBase, ampModPhase);
+		runOscillators(samples, freqModStep, freqModBase, ampModStep, ampModBase);
 
 		gap(samples);
 
@@ -180,6 +176,17 @@ public class Tone
 		return this.samples;
 	}
 
+	private Pair<Integer, Integer> calcModStep(Envelope envelope, Envelope rangeEnvelope, double scale) {
+		if (envelope == null || envelope.waveFun == WaveFun.OFF.ordinal())
+			return new Pair<>(0, 0);
+
+		envelope.reset();
+		rangeEnvelope.reset();
+		int step = (int)(scale * (envelope.max - envelope.min));
+		int base = (int)(scale * (envelope.min));
+		return new Pair<>(step, base);
+	}
+
 	int evaluateWave(int phase, int amplitude, int waveform) {
 		if (waveform == 1) {
 			return (phase & 32767) < 16384 ? amplitude
@@ -195,10 +202,9 @@ public class Tone
 		}
 	}
 
-	void runOscillators(int samples,
-						int freqModStep, int freqModBase, int freqModPhase,
-						int ampModStep, int ampModBase, int ampModPhase)
-	{
+	void runOscillators(int samples, int fmodStep, int fmodBase, int amodStep, int amodBase) {
+		int fmodPhase = 0;
+		int amodPhase = 0;
 		int frequency;
 		int amplitude;
 
@@ -209,23 +215,23 @@ public class Tone
 			{
 				int fmodRate = freqModRate.sample(samples);
 				int fmodMult = freqModRange.sample(samples);
-				frequency += evaluateWave(freqModPhase, fmodMult, freqModRate.waveFun) >> 1;
-				freqModPhase = freqModPhase + freqModBase + (fmodRate * freqModStep >> 16);
+				frequency += evaluateWave(fmodPhase, fmodMult, freqModRate.waveFun) >> 1;
+				fmodPhase = fmodPhase + fmodBase + (fmodRate * fmodStep >> 16);
 			}
 
 			if (ampModRate != null && ampModRate.waveFun != WaveFun.OFF.ordinal()) {
 				int amodRate = ampModRate.sample(samples);
 				int amodMult = ampModRange.sample(samples);
-				amplitude = amplitude * ((evaluateWave(ampModPhase, amodRate, ampModRate.waveFun) >> 1) + 32768) >> 15;
-				ampModPhase = ampModPhase + ampModBase + (amodMult * ampModStep >> 16);
+				amplitude = amplitude * ((evaluateWave(amodPhase, amodRate, ampModRate.waveFun) >> 1) + 32768) >> 15;
+				amodPhase = amodPhase + amodBase + (amodMult * amodStep >> 16);
 			}
 
 			for (int osc = 0; osc < 5; ++osc) {
-				if (harmonicVolumes[osc] != 0) {
-					int tgtI = delays[osc] + index;
+				if (volInput[osc] != 0) {
+					int tgtI = oscDelay[osc] + index;
 					if (tgtI < samples) {
-						this.samples[tgtI] += this.evaluateWave(phases[osc], amplitude * ampSteps[osc] >> 15, freqBase.waveFun);
-						this.phases[osc] += (frequency * freqSteps[osc] >> 16) + freqBaseSteps[osc];
+						this.samples[tgtI] += this.evaluateWave(oscPhase[osc], amplitude * oscVolum[osc] >> 15, freqBase.waveFun);
+						this.oscPhase[osc] += (frequency * oscStep[osc] >> 16) + oscBase[osc];
 					}
 				}
 			}
@@ -280,20 +286,20 @@ public class Tone
 
 		transitionCurve.reset();
 		int filterMix = transitionCurve.sample(samples + 1);
-		int f1Order = filter.compute(0, (float)filterMix / 65536.0F);
-		int f2Order = filter.compute(1, (float)filterMix / 65536.0F);
-		if (samples < f1Order + f2Order) {
+		int zeroDelay = filter.compute(0, (float)filterMix / 65536.0F);
+		int poleDelay = filter.compute(1, (float)filterMix / 65536.0F);
+		if (samples < zeroDelay + poleDelay) {
 			return;
 		}
 
 		int i;
-		int n = Math.min(f2Order, samples - f1Order);
+		int n = Math.min(poleDelay, samples - zeroDelay);
 		for (i = 0; i < n; i++)
 		{
-			int sample = (int) (((long) this.samples[i + f1Order] * (long) filter.linearGainInt) >> 16);
+			int sample = (int) (((long) this.samples[i + zeroDelay] * (long) filter.linearGainInt) >> 16);
 
-			for (int j = 0; j < f1Order; ++j) {
-				sample += (int)((long)this.samples[i + f1Order - 1 - j] * (long) filter.coefficients[0][j] >> 16);
+			for (int j = 0; j < zeroDelay; ++j) {
+				sample += (int)((long)this.samples[i + zeroDelay - 1 - j] * (long) filter.coefficients[0][j] >> 16);
 			}
 
 			for (int j = 0; j < i; ++j) {
@@ -306,18 +312,18 @@ public class Tone
 
 		boolean var21 = true;
 		for (n = 128; var21; n += 128) {
-			if (n > samples - f1Order) {
-				n = samples - f1Order;
+			if (n > samples - zeroDelay) {
+				n = samples - zeroDelay;
 			}
 
 			while (i < n) {
-				int sample = (int)((long)this.samples[i + f1Order] * (long)filter.linearGainInt >> 16);
+				int sample = (int)((long)this.samples[i + zeroDelay] * (long)filter.linearGainInt >> 16);
 
-				for (int j = 0; j < f1Order; ++j) {
-					sample += (int)((long)this.samples[i + f1Order - 1 - j] * (long)filter.coefficients[0][j] >> 16);
+				for (int j = 0; j < zeroDelay; ++j) {
+					sample += (int)((long)this.samples[i + zeroDelay - 1 - j] * (long)filter.coefficients[0][j] >> 16);
 				}
 
-				for (int j = 0; j < f2Order; ++j) {
+				for (int j = 0; j < poleDelay; ++j) {
 					sample -= (int)((long)this.samples[i - 1 - j] * (long)filter.coefficients[1][j] >> 16);
 				}
 
@@ -326,28 +332,26 @@ public class Tone
 				++i;
 			}
 
-			if (i >= samples - f1Order) {
+			if (i >= samples - zeroDelay) {
 				break;
 			}
-			f1Order = filter.compute(0, (float) filterMix / 65536.0F);
-			f2Order = filter.compute(1, (float) filterMix / 65536.0F);
+			zeroDelay = filter.compute(0, (float) filterMix / 65536.0F);
+			poleDelay = filter.compute(1, (float) filterMix / 65536.0F);
 		}
 
 		while (i < samples)
 		{
-			int j = 0;
+			int sample = 0;
 
-			for (int var18 = i + f1Order - samples; var18 < f1Order; ++var18)
-			{
-				j += (int) ((long) this.samples[i + f1Order - 1 - var18] * (long) filter.coefficients[0][var18] >> 16);
+			for (int j = i + zeroDelay - samples; j < zeroDelay; ++j) {
+				sample += (int) ((long) this.samples[i + zeroDelay - 1 - j] * (long) filter.coefficients[0][j] >> 16);
 			}
 
-			for (int var18 = 0; var18 < f2Order; ++var18)
-			{
-				j -= (int) ((long) this.samples[i - 1 - var18] * (long) filter.coefficients[1][var18] >> 16);
+			for (int j = 0; j < poleDelay; ++j) {
+				sample -= (int) ((long) this.samples[i - 1 - j] * (long) filter.coefficients[1][j] >> 16);
 			}
 
-			this.samples[i] = j;
+			this.samples[i] = sample;
 			this.transitionCurve.sample(samples + 1);
 			++i;
 		}
@@ -373,7 +377,7 @@ public class Tone
 
 	public static Tone defaultTone() {
 		Tone t = new Tone();
-		t.getHarmonicVolumes()[0] = 50;
+		t.getVolInput()[0] = 50;
 		return t;
 	}
 }

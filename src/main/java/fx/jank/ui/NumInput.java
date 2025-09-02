@@ -31,7 +31,7 @@ class NumInput extends JPanel
 
 		// and width
 		var editor = (JSpinner.NumberEditor) this.spinner.getEditor();
-		editor.getTextField().setColumns(5);
+		editor.getTextField().setColumns(3);
 	}
 
 	int getValue() {

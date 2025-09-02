@@ -48,7 +48,7 @@ public class  SynthPanel extends JPanel {
 	private EnvelopePanel ampEditor;
 	private EnvelopePanel gapEditor;
 	private ModeSelector modeSelector;
-	private JPanel centerContainer;
+	private Box centerContainer;
 	private Container mainPanel;
 	private Container filterPanel;
 	private HarmonicSettings harmonicSettings = new HarmonicSettings(this);
@@ -80,6 +80,8 @@ public class  SynthPanel extends JPanel {
 
 		this.modeSelector = new ModeSelector(this);
 		this.mainPanel = buildMainPanel();
+
+		// todo: filter needs input! (also frequency response)
 		this.filterPanel = new FilterPanel(this);
 		this.filterPanel.setVisible(false);
 
@@ -128,7 +130,7 @@ public class  SynthPanel extends JPanel {
 	}
 
 	private Container buildCenter() {
-		centerContainer = new JPanel();
+		centerContainer = Box.createHorizontalBox();
 		centerContainer.add(mainPanel);
 		centerContainer.add(filterPanel);
 		centerContainer.setBorder(BorderFactory.createLineBorder(Color.white));
@@ -198,10 +200,7 @@ public class  SynthPanel extends JPanel {
 	}
 
 	void stop() {
-		if (stream != null) {
-			PcmStream.stop(stream);
-			stream = null;
-		}
+		mixer.removeInput(stream);
 	}
 
 	public void setSynth(Synth synth) {

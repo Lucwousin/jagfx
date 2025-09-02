@@ -1,7 +1,6 @@
 package fx.jank.ui;
 
 import fx.jank.ui.util.Buttons;
-import java.awt.Dimension;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import static javax.swing.BoxLayout.X_AXIS;
@@ -31,11 +30,6 @@ public class ToneSelector extends JPanel {
 		container.setLayout(new BoxLayout(container, X_AXIS));
 		add(new JLabel("Editing tone:"));
 		add(container);
-		var butts = buttons.getButtons();
-		var minS = butts.get(9).getPreferredSize();
-		for (var b : butts) {
-			b.setMinimumSize(minS);
-		}
 	}
 
 	private void addButton(JToggleButton button) {

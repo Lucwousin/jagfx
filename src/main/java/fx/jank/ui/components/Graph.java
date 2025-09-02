@@ -47,4 +47,15 @@ public abstract class Graph extends Component {
 	}
 
 	protected abstract void paintGraph(Graphics g);
+
+	@Override
+	public Dimension getMinimumSize() {
+		// double cause in container for border
+		var graphview = getParent();
+
+		int height = graphview.getParent().getHeight() - graphview.getComponent(0).getHeight();
+		// oh no hardcoded todo maybe
+		int width = graphview.getParent().getComponentCount() == 1 ? graphview.getParent().getWidth() - 75 : graphview.getWidth();
+		return new Dimension(width, height);
+	}
 }

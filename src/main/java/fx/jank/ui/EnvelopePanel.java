@@ -1,9 +1,8 @@
 package fx.jank.ui;
 
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.GridLayout;
-import javax.swing.BoxLayout;
+import javax.swing.Box;
+import static javax.swing.BoxLayout.X_AXIS;
 import javax.swing.JPanel;
 
 public class EnvelopePanel extends JPanel
@@ -27,7 +26,7 @@ public class EnvelopePanel extends JPanel
 					() -> parent.getSelectedTone().getAmpBase(),
 					() -> true);
 		}
-		JPanel container = new JPanel();
+		var container = Box.createHorizontalBox();
 		graphs[0] = view;
 		container.add(view);
 		container.add(settings);
@@ -58,10 +57,10 @@ public class EnvelopePanel extends JPanel
 					() -> parent.getSelectedTone().getGapOff().getWaveFun() != 0);
 				break;
 		}
-		container = new JPanel();
+		container = Box.createHorizontalBox();
 		container.add(graphs[1]);
 		add(container);
-		container = new JPanel();
+		container = Box.createHorizontalBox();
 		container.add(graphs[2]);
 		add(container);
 	}

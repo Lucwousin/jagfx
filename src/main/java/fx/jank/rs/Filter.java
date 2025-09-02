@@ -38,14 +38,14 @@ public class Filter
 		linearGain = fromDecibel(gainDb);
 		linearGainInt = (int)(linearGain * 65536.0F);
 	}
-	float getBand(int f, int i, float mix) {
+	float getStrength(int f, int i, float mix) {
 		float db = (float)this.pzYs[f][0][i] + mix * (float)(this.pzYs[f][1][i] - this.pzYs[f][0][i]);
 		db *= 100.f / 65536.f; 
 		return 1.0F - fromDecibel(db);
 	}
 
 
-	float getCenterFrequency(int f, int i, float mix) {
+	float getBandwidth(int f, int i, float mix) {
 		float var4 = (float)this.pzXs[f][0][i] + mix * (float)(this.pzXs[f][1][i] - this.pzXs[f][0][i]);
 		var4 *= 8.f / 65536.f; 
 		return octaveToFrequency(var4);
@@ -61,14 +61,14 @@ public class Filter
 			return 0;
 		}
 
-		var3 = this.getBand(f, 0, mix);
-		coefficientsFloat[f][0] = -2.0F * var3 * (float)Math.cos((double)this.getCenterFrequency(f, 0, mix));
+		var3 = this.getStrength(f, 0, mix);
+		coefficientsFloat[f][0] = -2.0F * var3 * (float)Math.cos((double)this.getBandwidth(f, 0, mix));
 		coefficientsFloat[f][1] = var3 * var3;
 
 		int var4;
 		for (var4 = 1; var4 < this.orderN[f]; ++var4) {
-			var3 = this.getBand(f, var4, mix);
-			float var5 = -2.0F * var3 * (float)Math.cos((double)this.getCenterFrequency(f, var4, mix));
+			var3 = this.getStrength(f, var4, mix);
+			float var5 = -2.0F * var3 * (float)Math.cos((double)this.getBandwidth(f, var4, mix));
 			float var6 = var3 * var3;
 			coefficientsFloat[f][var4 * 2 + 1] = coefficientsFloat[f][var4 * 2 - 1] * var6;
 			coefficientsFloat[f][var4 * 2] = coefficientsFloat[f][var4 * 2 - 1] * var5 + coefficientsFloat[f][var4 * 2 - 2] * var6;

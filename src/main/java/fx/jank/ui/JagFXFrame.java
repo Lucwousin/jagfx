@@ -26,7 +26,7 @@ public class JagFXFrame extends JFrame {
 
 		var frame = new JagFXFrame();
 		frame.init();
-		SynthLoader.loadCache(frame.panel, 4211);
+		SynthLoader.loadCache(frame.panel, 370);
 		frame.open();
 	}
 
