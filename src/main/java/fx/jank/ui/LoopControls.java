@@ -59,7 +59,7 @@ class LoopControls extends JPanel
 		parent.update();
 	}
 
-	public void revalidate() {
+	public void update() {
 		if (parent == null)
 			return;
 		Tone t = parent.getSelectedTone();
@@ -97,5 +97,12 @@ class LoopControls extends JPanel
 			c.setMinimumSize(newSize);
 		}
 		this.setMinimumSize(new Dimension(width, height));
+	}
+
+	public int getL1() {
+		return l1.getValue();
+	}
+	public int getL2() {
+		return l2.getValue();
 	}
 }

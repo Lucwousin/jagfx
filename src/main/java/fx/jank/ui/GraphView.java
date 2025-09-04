@@ -32,7 +32,7 @@ public class GraphView extends JPanel {
 	}
 
 
-	public void revalidate() {
+	public void update() {
 		if (graph != null)
 			graph.repaint();
 	}

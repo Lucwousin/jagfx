@@ -3,6 +3,7 @@ package fx.jank.ui;
 import fx.jank.rs.Envelope;
 import fx.jank.ui.util.Buttons;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.util.function.Supplier;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -80,7 +81,7 @@ class EnvelopeSettings extends JPanel
 		parent.revalidate();
 	}
 
-	public void revalidate() {
+	public void update() {
 		if (envelope == null)
 			return;
 		Envelope target = envelope.get();

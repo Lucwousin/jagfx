@@ -2,8 +2,6 @@ package fx.jank.ui;
 
 import fx.jank.rs.Tone;
 import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -17,7 +15,11 @@ public class HarmonicSettings extends JPanel
 {
 	private static final int SPINNER_WIDTH = 2;
 
-	private static class HarmonicSetting extends JPanel {
+	private static abstract class ASetting extends JPanel {
+		abstract void update();
+	}
+	private static class HarmonicSetting extends ASetting
+	{
 		private final int index;
 		private final SynthPanel parent;
 		private final JSpinner semitone;
@@ -70,7 +72,7 @@ container.add(label);
 			add(container);
 		}
 
-		public void revalidate() {
+		public void update() {
 			if (parent == null || parent.getSelectedTone() == null)
 				return;
 			Tone tone = parent.getSelectedTone();
@@ -89,7 +91,8 @@ container.add(label);
 		}
 	}
 
-	private static class ReverbSettings extends JPanel {
+	private static class ReverbSettings extends ASetting
+	{
 		private final JSpinner reverbVol = new JSpinner(new SpinnerNumberModel(100, 0, 100, 1));
 		private final JSpinner reverbDel = new JSpinner(new SpinnerNumberModel(0, 0, 65535, 1));
 		private final SynthPanel parent;
@@ -116,7 +119,7 @@ container.add(label);
 			add(container);
 		}
 
-		public void revalidate() {
+		public void update() {
 			if (parent == null || parent.getSelectedTone() == null)
 				return;
 			Tone t = parent.getSelectedTone();
@@ -131,7 +134,7 @@ container.add(label);
 		}
 	}
 
-	private final JPanel[] settings = new JPanel[6];
+	private final ASetting[] settings = new ASetting[6];
 	public HarmonicSettings(SynthPanel parent) {
 		JPanel container = new JPanel();
 		container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
@@ -148,13 +151,13 @@ container.add(label);
 		add(container);
 		//add(Box.createHorizontalGlue());
 	}
-	public void revalidate() {
+	public void update() {
 		if (settings == null)
 			return;
-		for (Container setting : settings) {
+		for (ASetting setting : settings) {
 			if (setting == null)
 				return;
-			setting.revalidate();
+			setting.update();
 		}
 	}
 

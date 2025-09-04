@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Synth
 {
+	public static int MAX_TONES = 10;
 	public static Synth loadSynth(byte[] data)
 	{
 		log.debug("Loading synth from {} bytes of data", data.length);
@@ -17,7 +18,7 @@ public class Synth
 		return new Synth(in);
 	}
 
-	private Tone[] tones = new Tone[10];
+	private Tone[] tones = new Tone[MAX_TONES];
 	@Setter
 	int l1;
 	@Setter
@@ -26,7 +27,7 @@ public class Synth
 	public Synth() {};
 
 	Synth(ByteStream in) {
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < MAX_TONES; i++) {
 			if (in.tryGet()) {
 				tones[i] = new Tone();
 				tones[i].readFrom(in);
@@ -49,7 +50,7 @@ public class Synth
 		int sampleCount = totalDuration * 22050 / 1000;
 		byte[] samples = new byte[sampleCount];
 
-		for (int i = 0; i < 10; ++i)
+		for (int i = 0; i < MAX_TONES; ++i)
 		{
 			mixTone(i, samples);
 		}
@@ -61,7 +62,7 @@ public class Synth
 		int max = 0;
 
 		int var2;
-		for (var2 = 0; var2 < 10; ++var2)
+		for (var2 = 0; var2 < MAX_TONES; ++var2)
 		{
 			if (this.tones[var2] != null && this.tones[var2].len + this.tones[var2].pos > max)
 			{
@@ -74,7 +75,7 @@ public class Synth
 	public final int calculateDelay() {
 		int minDelay = 9999999; 
 
-		for (int i = 0; i < 10; ++i) { 
+		for (int i = 0; i < MAX_TONES; ++i) {
 			if (this.tones[i] != null && this.tones[i].pos / 20 < minDelay) {
 				minDelay = this.tones[i].pos / 20;
 			}
@@ -85,7 +86,7 @@ public class Synth
 		}
 
 		if (minDelay != 9999999 && minDelay != 0) { 
-			for (int i = 0; i < 10; ++i) { 
+			for (int i = 0; i < MAX_TONES; ++i) {
 				if (this.tones[i] != null) {
 					this.tones[i].pos -= minDelay * 20;
 				}

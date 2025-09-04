@@ -75,13 +75,13 @@ public class EnvelopePanel extends JPanel
 		return new EnvelopePanel(parent, settings, Type.GAP, view);
 	}
 
-	public void revalidate() {
+	public void update() {
 		if (graphs == null)
 			return;
 		for (GraphView v : graphs) {
 			if (v == null)
 				break;
-			v.revalidate();
+			v.update();
 		}
 	}
 }

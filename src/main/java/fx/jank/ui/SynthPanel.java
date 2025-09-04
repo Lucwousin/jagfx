@@ -4,7 +4,6 @@ import fx.jank.rs.BufferedTrack;
 import fx.jank.rs.Mixer;
 import fx.jank.rs.PcmStream;
 import fx.jank.rs.RawPcmStream;
-import fx.jank.rs.Resampler;
 import static fx.jank.rs.SoundSystem.sampleRate;
 import fx.jank.rs.Synth;
 import fx.jank.rs.Tone;
@@ -12,12 +11,9 @@ import static fx.jank.ui.EnvelopeSettings.createGapSettings;
 import static fx.jank.ui.EnvelopeSettings.createOscillatorSettings;
 import fx.jank.ui.components.WaveGraph;
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.function.Supplier;
 import javax.swing.BorderFactory;
@@ -38,26 +34,28 @@ public class  SynthPanel extends JPanel {
 	private final Mixer mixer;
 
 	// main oscillator waveform and frequency selectors
-	private EnvelopeSettings freqBaseCfg;
-	private EnvelopeSettings freqModCfg;
-	private EnvelopeSettings ampModCfg;
-	private EnvelopeSettings gapCfg;
-	private LoopControls loopControls;
-	private MediaControls mediaControls;
-	private EnvelopePanel frqEditor;
-	private EnvelopePanel ampEditor;
-	private EnvelopePanel gapEditor;
-	private ModeSelector modeSelector;
-	private Box centerContainer;
-	private Container mainPanel;
-	private Container filterPanel;
-	private HarmonicSettings harmonicSettings = new HarmonicSettings(this);
+	private final EnvelopeSettings freqBaseCfg;
+	private final EnvelopeSettings freqModCfg;
+	private final EnvelopeSettings ampModCfg;
+	private final EnvelopeSettings gapCfg;
+	private final LoopControls loopControls;
+	private final MediaControls mediaControls;
+	private final EnvelopePanel frqEditor;
+	private final EnvelopePanel ampEditor;
+	private final EnvelopePanel gapEditor;
+	private final ModeSelector modeSelector;
+	private final Container centerContainer;
+	private final Container mainPanel;
+	private final FilterPanel filterPanel;
+	private final HarmonicSettings harmonicSettings = new HarmonicSettings(this);
 
 	@Getter
 	private BufferedTrack buffer = null;
 	private BufferedTrack soloBuffer = null;
 	private RawPcmStream stream;
 	private GraphView waveGraph;
+
+	private boolean toneChanged = false;
 
 	SynthPanel(Mixer mixer) {
 		this.mixer = mixer;
@@ -84,8 +82,9 @@ public class  SynthPanel extends JPanel {
 		// todo: filter needs input! (also frequency response)
 		this.filterPanel = new FilterPanel(this);
 		this.filterPanel.setVisible(false);
+		this.centerContainer = buildCenter();
 
-		add(buildCenter(), BorderLayout.CENTER);
+		add(centerContainer, BorderLayout.CENTER);
 
 		add(bottom(), BorderLayout.SOUTH);
 
@@ -130,7 +129,7 @@ public class  SynthPanel extends JPanel {
 	}
 
 	private Container buildCenter() {
-		centerContainer = Box.createHorizontalBox();
+		var centerContainer = Box.createHorizontalBox();
 		centerContainer.add(mainPanel);
 		centerContainer.add(filterPanel);
 		centerContainer.setBorder(BorderFactory.createLineBorder(Color.white));
@@ -160,38 +159,34 @@ public class  SynthPanel extends JPanel {
 
 	void setSelectedTone(int idx) {
 		this.selectedTone = idx;
-		this.freqBaseCfg.revalidate();
-		this.freqModCfg.revalidate();
-		this.ampModCfg.revalidate();
-		this.gapCfg.revalidate();
-		this.harmonicSettings.revalidate();
-		this.update();
+		this.harmonicSettings.update();
+		this.freqBaseCfg.update();
+		this.frqEditor.update();
+		this.ampEditor.update();
+		this.gapEditor.update();
+		this.loopControls.update();
+		this.filterPanel.update();
+		this.synthTone();
 	}
 
 	void play() {
-		if (stream != null && stream.isPlaying()) {
-			PcmStream.stop(stream);
-			stream = null;
-		}
+		stop();
 		if (soloBuffer == null) {
 			soloBuffer = this.getSelectedTone().getStream();
 		}
 		soloBuffer.loop = mediaControls.shouldLoop();
-		//soloBuffer.start = loopControls.getL1();
-		//soloBuffer.end = loopControls.getL2();
+		soloBuffer.l1 = loopControls.getL1();
+		soloBuffer.l2 = loopControls.getL2();
 		this.stream = RawPcmStream.createRawPcmStream(soloBuffer,100, 255);
 		stream.setNumLoops(mediaControls.getLoopCount());
 		mixer.addInput(stream);
 	}
 
 	void playAll() {
-		if (stream != null && stream.isPlaying()) {
-			PcmStream.stop(stream);
-			stream = null;
-		}
+		stop();
 		if (buffer == null) {
-			Resampler rs = new Resampler(22050, sampleRate);
-			buffer = synth.getStream().resample(rs);
+			//Resampler rs = new Resampler(22050, sampleRate);
+			buffer = synth.getStream();//.resample(rs);
 		}
 		buffer.loop = mediaControls.shouldLoop();
 		this.stream = RawPcmStream.createRawPcmStream(buffer, 100, 255);
@@ -200,33 +195,24 @@ public class  SynthPanel extends JPanel {
 	}
 
 	void stop() {
-		mixer.removeInput(stream);
+		if (stream != null && stream.isPlaying()) {
+			mixer.removeInput(stream);
+			PcmStream.stop(stream);
+			stream = null;
+		}
 	}
 
 	public void setSynth(Synth synth) {
+		stop();
 		this.synth = synth;
+		this.toneChanged = true;
 		setSelectedTone(0);
 	}
 
-/*	public void revalidate() {
-		Tone t = getSelectedTone();
-		if (t == null)
-			return;
-		this.buffer = this.synth.getStream();
-		remove(graphPanel);
-		this.graphPanel = new ToneGraphPanel(getSelectedTone());
-		add(graphPanel, BorderLayout.CENTER);
-		super.revalidate();
-	}*/
-
 	public void update() {
-		Resampler rs = new Resampler(22050, sampleRate);
-		this.buffer = this.synth.getStream().resample(rs);
-		this.frqEditor.revalidate();
-		this.ampEditor.revalidate();
-		this.gapEditor.revalidate();
-		this.loopControls.revalidate();
-		this.filterPanel.revalidate();
+		this.toneChanged = true; // lol
+		synthTone();
+
 	}
 
 	public void revalidate() {
@@ -234,6 +220,15 @@ public class  SynthPanel extends JPanel {
 			return;
 		mainPanel.setVisible(modeSelector.displayMain());
 		filterPanel.setVisible(modeSelector.displayFilter());
-		this.filterPanel.revalidate();;
+		this.filterPanel.revalidate();
+	}
+
+	private void synthTone() {
+		if (!toneChanged) {
+			return;
+		}
+		toneChanged = false;
+		getSelectedTone().synthAll(sampleRate);
+		waveGraph.repaint();
 	}
 }

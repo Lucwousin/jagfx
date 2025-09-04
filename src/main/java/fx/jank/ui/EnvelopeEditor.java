@@ -21,6 +21,7 @@ class EnvelopeEditor extends GraphView {
 			} else {
 				updateSelectedIndex(e);
 			}
+			graph.repaint();
 		}
 
 		@Override
@@ -133,8 +134,7 @@ class EnvelopeEditor extends GraphView {
 		this.checkActive = checkActive;
 	}
 
-	@Override
-	public void revalidate() {
+	public void update() {
 		if (checkActive == null)
 			return;
 		boolean active = checkActive.getAsBoolean();
@@ -144,6 +144,6 @@ class EnvelopeEditor extends GraphView {
 		} else {
 			graph.removeMouseListener(this.inputListener);
 		}
-		super.revalidate();
+		graph.repaint();
 	}
 }

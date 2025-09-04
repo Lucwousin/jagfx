@@ -1,5 +1,6 @@
 package fx.jank.ui;
 
+import static fx.jank.rs.Synth.MAX_TONES;
 import fx.jank.ui.util.Buttons;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -12,8 +13,8 @@ import javax.swing.JToggleButton;
 public class ToneSelector extends JPanel {
 	private static final String[] NUMBERS;
 	static {
-		NUMBERS = new String[10];
-		for (int i = 0; i < 10; i++) {
+		NUMBERS = new String[MAX_TONES];
+		for (int i = 0; i < MAX_TONES; i++) {
 			NUMBERS[i] = String.valueOf(i + 1);
 		}
 	}

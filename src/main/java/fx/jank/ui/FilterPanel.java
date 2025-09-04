@@ -28,11 +28,11 @@ public class FilterPanel extends JPanel {
 		add(freqResponse);
 	}
 
-	public void revalidate() {
+	public void update() {
 		if (parent == null)
 			return;
-		pzGraph.revalidate();
-		transitionCurve.revalidate();
-		freqResponse.revalidate();
+		pzGraph.update();
+		transitionCurve.update();
+		freqResponse.update();
 	}
 }
