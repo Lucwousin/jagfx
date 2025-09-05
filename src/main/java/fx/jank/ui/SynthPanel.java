@@ -4,7 +4,7 @@ import fx.jank.rs.BufferedTrack;
 import fx.jank.rs.Mixer;
 import fx.jank.rs.PcmStream;
 import fx.jank.rs.RawPcmStream;
-import static fx.jank.rs.SoundSystem.sampleRate;
+import fx.jank.rs.Resampler;
 import fx.jank.rs.Synth;
 import fx.jank.rs.Tone;
 import static fx.jank.ui.EnvelopeSettings.createGapSettings;
@@ -15,7 +15,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,7 +25,7 @@ public class  SynthPanel extends JPanel {
 	private static final int PAD = 8;
 
 	@Getter
-	private Synth synth;
+	private Synth synth = new Synth();;
 	private int selectedTone = 0;
 
 	private boolean initialized = false;
@@ -34,55 +33,37 @@ public class  SynthPanel extends JPanel {
 	private final Mixer mixer;
 
 	// main oscillator waveform and frequency selectors
-	private final EnvelopeSettings freqBaseCfg;
-	private final EnvelopeSettings freqModCfg;
-	private final EnvelopeSettings ampModCfg;
-	private final EnvelopeSettings gapCfg;
-	private final LoopControls loopControls;
-	private final MediaControls mediaControls;
-	private final EnvelopePanel frqEditor;
-	private final EnvelopePanel ampEditor;
-	private final EnvelopePanel gapEditor;
-	private final ModeSelector modeSelector;
-	private final Container centerContainer;
-	private final Container mainPanel;
-	private final FilterPanel filterPanel;
+	private final EnvelopeSettings freqBaseCfg = createOscillatorSettings(this, Tone::getFreqBase);
+	private final EnvelopeSettings freqModCfg = createOscillatorSettings(this, Tone::getFreqModRate);
+	private final EnvelopeSettings ampModCfg = createOscillatorSettings(this, Tone::getAmpModRate);
+	private final EnvelopeSettings gapCfg = createGapSettings(this, Tone::getGapOff);
+	private final LoopControls loopControls = new LoopControls(this);
+	private final MediaControls mediaControls = new MediaControls(this);
+	private final GraphView waveGraph = new GraphView("Final Output", new WaveGraph(this::getSelectedTone));
+	private final EnvelopePanel frqEditor = EnvelopePanel.frqEditor(this, freqModCfg);
+	private final EnvelopePanel ampEditor = EnvelopePanel.ampEditor(this, ampModCfg);
+	private final EnvelopePanel gapEditor = EnvelopePanel.gapEditor(this, gapCfg, waveGraph);
+	private final ModeSelector modeSelector = new ModeSelector(this);
+	private final Container mainPanel = buildMainPanel();
+	private final FilterPanel filterPanel = new FilterPanel(this);
+	private final Container centerContainer = buildCenter();
+	private final ToneSelector toneSelector = new ToneSelector(this);
 	private final HarmonicSettings harmonicSettings = new HarmonicSettings(this);
 
 	@Getter
 	private BufferedTrack buffer = null;
 	private BufferedTrack soloBuffer = null;
 	private RawPcmStream stream;
-	private GraphView waveGraph;
 
 	private boolean toneChanged = false;
 
 	SynthPanel(Mixer mixer) {
 		this.mixer = mixer;
-		this.synth = new Synth();
-
-		final Supplier<Tone> toneProvider = this::getSelectedTone;
-		this.freqBaseCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getFreqBase());
-		this.freqModCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getFreqModRate());
-		this.ampModCfg = createOscillatorSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getAmpModRate());
-		this.gapCfg = createGapSettings(this, () -> toneProvider.get() == null ? null : toneProvider.get().getGapOff());
-		this.loopControls = new LoopControls(this);
-		this.mediaControls = new MediaControls(this);
-
-		this.waveGraph = new GraphView("Final Output", new WaveGraph(this::getSelectedTone));
-		this.frqEditor = EnvelopePanel.frqEditor(this, freqModCfg);
-		this.ampEditor = EnvelopePanel.ampEditor(this, ampModCfg);
-		this.gapEditor = EnvelopePanel.gapEditor(this, gapCfg, waveGraph);
 		setLayout(new BorderLayout());
 		add(leftContainer(), BorderLayout.WEST);
 
-		this.modeSelector = new ModeSelector(this);
-		this.mainPanel = buildMainPanel();
-
 		// todo: filter needs input! (also frequency response)
-		this.filterPanel = new FilterPanel(this);
 		this.filterPanel.setVisible(false);
-		this.centerContainer = buildCenter();
 
 		add(centerContainer, BorderLayout.CENTER);
 
@@ -139,7 +120,7 @@ public class  SynthPanel extends JPanel {
 	private Container bottom() {
 		Container bottom = new JPanel();
 		bottom.setLayout(new BoxLayout(bottom, BoxLayout.X_AXIS));
-		bottom.add(new ToneSelector(this));
+		bottom.add(toneSelector);
 		bottom.add(harmonicSettings);
 		bottom.add(modeSelector);
 		return bottom;
@@ -173,6 +154,7 @@ public class  SynthPanel extends JPanel {
 		stop();
 		if (soloBuffer == null) {
 			soloBuffer = this.getSelectedTone().getStream();
+			soloBuffer = soloBuffer.resample(Resampler.instance);
 		}
 		soloBuffer.loop = mediaControls.shouldLoop();
 		soloBuffer.l1 = loopControls.getL1();
@@ -185,8 +167,8 @@ public class  SynthPanel extends JPanel {
 	void playAll() {
 		stop();
 		if (buffer == null) {
-			//Resampler rs = new Resampler(22050, sampleRate);
-			buffer = synth.getStream();//.resample(rs);
+			buffer = synth.getStream();
+			buffer = buffer.resample(Resampler.instance);
 		}
 		buffer.loop = mediaControls.shouldLoop();
 		this.stream = RawPcmStream.createRawPcmStream(buffer, 100, 255);
@@ -228,7 +210,7 @@ public class  SynthPanel extends JPanel {
 			return;
 		}
 		toneChanged = false;
-		getSelectedTone().synthAll(sampleRate);
+		getSelectedTone().synthAll();
 		waveGraph.repaint();
 	}
 }

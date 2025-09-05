@@ -1,6 +1,7 @@
 package fx.jank.ui.components;
 
-import static fx.jank.rs.SoundSystem.sampleRate;
+import static fx.jank.rs.SoundSystem.sampleRateOut;
+import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import fx.jank.rs.Tone;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -18,7 +19,7 @@ public class WaveGraph extends Graph
 		Tone tone = bufferProvider.get();
 		//todo: true wave? idk
 		int[] samples = tone.getSamples();
-		int sampleCount = tone.getLen() * sampleRate / 1000;
+		int sampleCount = tone.getLen() * SAMPLE_RATE_SYNTH / 1000;
 		float xScale = getWidth() / (float)sampleCount;
 		float yScale = getHeight() / 65536.f;
 		int midY = getHeight() / 2;

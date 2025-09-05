@@ -1,8 +1,9 @@
 package fx.jank.ui;
 
+import java.awt.Color;
 import java.awt.GridLayout;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
-import static javax.swing.BoxLayout.X_AXIS;
 import javax.swing.JPanel;
 
 public class EnvelopePanel extends JPanel
@@ -14,8 +15,10 @@ public class EnvelopePanel extends JPanel
 	}
 
 	private final GraphView[] graphs = new GraphView[3];
+	private final EnvelopeSettings settings;
 
 	private EnvelopePanel(SynthPanel parent, EnvelopeSettings settings, Type type, GraphView view) {
+		this.settings = settings;
 		setLayout(new GridLayout(1, 0, 15, 0));
 		if (view == null) {
 			view = type == Type.FREQUENCY ?
@@ -83,5 +86,6 @@ public class EnvelopePanel extends JPanel
 				break;
 			v.update();
 		}
+		this.settings.update();
 	}
 }

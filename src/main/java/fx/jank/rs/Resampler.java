@@ -1,8 +1,11 @@
 package fx.jank.rs;
 
+import static fx.jank.rs.SoundSystem.sampleRateOut;
+import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
+
 public class Resampler
 {
-	static int field402;
+	public static Resampler instance = new Resampler(SAMPLE_RATE_SYNTH, sampleRateOut);
 	int inputRate;
 	int outputRate;
 	int[][] filter;
@@ -59,8 +62,7 @@ public class Resampler
 				}
 
 				// filter shit
-				interpolatedSample *= 0.54D;
-				interpolatedSample += 0.46D * Math.cos(0.2243994752564138D * ((double) insertIdx - var9)); 
+				interpolatedSample *= 0.54D + 0.46D * Math.cos(0.2243994752564138D * ((double) insertIdx - var9));
 				this.filter[i][insertIdx] = (int) Math.floor(0.5D + 65536.0D * interpolatedSample); 
 			}
 		}

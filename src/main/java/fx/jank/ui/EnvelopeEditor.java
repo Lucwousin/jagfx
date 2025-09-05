@@ -52,8 +52,8 @@ class EnvelopeEditor extends GraphView {
 		private void createPoint(MouseEvent e) {
 			int mx = e.getX(); int my = e.getY();
 			int cw = e.getComponent().getWidth(); int ch = e.getComponent().getHeight();
-			int newX = mx * 65535 / cw;
-			int newY = 65535 - my * 65535 / ch;
+			int newX = mx * 65536 / cw;
+			int newY = 65536 - my * 65536 / ch;
 			Envelope target = targetProvider.get();
 			selectedIndex = target.insertPoint(newX, newY);
 			graph.repaint();
@@ -69,13 +69,13 @@ class EnvelopeEditor extends GraphView {
 		}
 
 		private void movePoint(int mx, int my, int cw, int ch) {
-			int newX = mx * 65535 / cw;
-			int newY = 65535 - my * 65535 / ch;
+			int newX = mx * 65536 / cw;
+			int newY = 65536 - my * 65536 / ch;
 			Envelope target = targetProvider.get();
 			if (selectedIndex == 0) {
 				newX = 0;
 			} else if (selectedIndex == target.getBands() - 1) {
-				newX = 65535;
+				newX = 65536;
 			}
 			target.getX()[selectedIndex] = newX;
 			target.getY()[selectedIndex] = newY;
@@ -105,8 +105,8 @@ class EnvelopeEditor extends GraphView {
 
 		private void updateSelectedIndex(MouseEvent e) {
 			Envelope target = targetProvider.get();
-			int rx = e.getX() * 65535 / e.getComponent().getHeight();
-			int ry = 65535 - e.getY() * 65535 / e.getComponent().getHeight();
+			int rx = e.getX() * 65536 / e.getComponent().getHeight();
+			int ry = 65536 - e.getY() * 65536 / e.getComponent().getHeight();
 			selectedIndex = findClosestIndex(target, rx, ry);
 		}
 

@@ -43,7 +43,7 @@ public class ToneSelector extends JPanel {
 			parent.setSelectedTone(index);
 	}
 
-	public void revalidate() {
+	public void update() {
 		if (buttons == null || parent == null)
 			return;
 		buttons.select(parent.getSelectedToneIdx());

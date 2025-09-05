@@ -761,7 +761,7 @@ public class RawPcmStream extends PcmStream {
 	}
 
 	public static RawPcmStream createRawPcmStream(BufferedTrack src, int speed, int volume) {
-		return src.samples != null && src.samples.length != 0 ? new RawPcmStream(src, (int)((long)src.sampleRate * 256L * (long)speed / (SoundSystem.sampleRate * 100L)), volume << 6) : null;
+		return src.samples != null && src.samples.length != 0 ? new RawPcmStream(src, (int)((long)src.sampleRate * 256L * (long)speed / (SoundSystem.sampleRateOut * 100L)), volume << 6) : null;
 	}
 
 	public static RawPcmStream createRawPcmStream(BufferedTrack src, int var1, int var2, int var3) {

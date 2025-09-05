@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Synth
 {
+	public static int SAMPLE_RATE_SYNTH = 22050;
 	public static int MAX_TONES = 10;
 	public static Synth loadSynth(byte[] data)
 	{
@@ -47,7 +48,7 @@ public class Synth
 		{
 			return new byte[0];
 		}
-		int sampleCount = totalDuration * 22050 / 1000;
+		int sampleCount = totalDuration * SAMPLE_RATE_SYNTH / 1000;
 		byte[] samples = new byte[sampleCount];
 
 		for (int i = 0; i < MAX_TONES; ++i)
@@ -106,8 +107,8 @@ public class Synth
 	public void mixTone(int t, byte[] samples) {
 		if (this.tones[t] == null) return;
 
-		int sampleCount = this.tones[t].len * 22050 / 1000;
-		int sampleOffset = this.tones[t].pos * 22050 / 1000;
+		int sampleCount = this.tones[t].len * SAMPLE_RATE_SYNTH / 1000;
+		int sampleOffset = this.tones[t].pos * SAMPLE_RATE_SYNTH / 1000;
 		int[] wave = this.tones[t].synthesize(sampleCount, this.tones[t].len);
 		blend(samples, wave, sampleOffset, sampleCount);
 	}
@@ -127,6 +128,6 @@ public class Synth
 
 	public BufferedTrack getStream() {
 		final byte[] mix = mix();
-		return new BufferedTrack(22050, mix, l1 * 22050 / 1000, l2 * 22050 / 1000);
+		return new BufferedTrack(SAMPLE_RATE_SYNTH, mix, l1 * SAMPLE_RATE_SYNTH / 1000, l2 * SAMPLE_RATE_SYNTH / 1000);
 	}
 }

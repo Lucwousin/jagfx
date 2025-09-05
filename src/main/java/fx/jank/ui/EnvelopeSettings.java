@@ -1,18 +1,19 @@
 package fx.jank.ui;
 
 import fx.jank.rs.Envelope;
+import fx.jank.rs.Tone;
 import fx.jank.ui.util.Buttons;
 import java.awt.Dimension;
-import java.awt.Graphics;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 
-class EnvelopeSettings extends JPanel
-{
+class EnvelopeSettings extends JPanel {
 	private static final String[] WAVEFORMS = {
 		"Off", "Sqr", "Sin", "Saw", "Noise"
 	};
@@ -29,6 +30,7 @@ class EnvelopeSettings extends JPanel
 		this.envelope = envelope;
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
 		this.buttons = new Buttons(labels, 0, b -> {
 			b.setAlignmentX(.5f);
@@ -49,11 +51,11 @@ class EnvelopeSettings extends JPanel
 		updateSize();
 	}
 
-	static EnvelopeSettings createOscillatorSettings(SynthPanel parent, Supplier<Envelope> envelope) {
-		return new EnvelopeSettings(parent, envelope, WAVEFORMS, "Hz");
+	static EnvelopeSettings createOscillatorSettings(SynthPanel parent, Function<Tone, Envelope> envelopeSupplier) {
+		return new EnvelopeSettings(parent, () -> envelopeSupplier.apply(parent.getSelectedTone()), WAVEFORMS, "Hz");
 	}
-	static EnvelopeSettings createGapSettings(SynthPanel parent, Supplier<Envelope> envelope) {
-		return new EnvelopeSettings(parent, envelope, new String[]{"Off", "On"}, "Gap");
+	static EnvelopeSettings createGapSettings(SynthPanel parent, Function<Tone, Envelope> envelopeSupplier) {
+		return new EnvelopeSettings(parent, () -> envelopeSupplier.apply(parent.getSelectedTone()), new String[]{"Off", "On"}, "Gap");
 	}
 
 	private void onButton(int index) {
@@ -62,7 +64,6 @@ class EnvelopeSettings extends JPanel
 			return;
 		target.setWaveFun(index);
 		parent.update();
-		parent.revalidate();
 	}
 
 	private void onMinMaxEvent(ChangeEvent e) {
@@ -78,7 +79,6 @@ class EnvelopeSettings extends JPanel
 		int avg = min.getValue() + max.getValue() / 2;
 		this.avg.setValue(avg);
 		parent.update();
-		parent.revalidate();
 	}
 
 	public void update() {
@@ -121,6 +121,8 @@ class EnvelopeSettings extends JPanel
 		max.setMinimumSize(nSize);
 		avg.setMaximumSize(nSize);
 		avg.setMinimumSize(nSize);
-		this.setMinimumSize(new Dimension(width, height));
+		setMaximumSize(new Dimension(width, 65536));
+		//setMinimumSize(new Dimension(width, 0));
 	}
+
 }

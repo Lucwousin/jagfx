@@ -1,6 +1,6 @@
 package fx.jank.rs;
 
-import static fx.jank.rs.SoundSystem.sampleRate;
+import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -8,6 +8,7 @@ import lombok.ToString;
 @Getter
 public class Filter
 {
+	private static final float NYQUIST_FREQ = SAMPLE_RATE_SYNTH / 2.f;
 	float[][] coefficientsFloat = new float[2][8];
 	int[][] coefficients = new int[2][8];
 
@@ -23,12 +24,9 @@ public class Filter
 	int[] gain;
 
 	Filter() {
-		// 0-15
 		this.orderN = new int[2];
-
 		this.pzXs = new int[2][2][4];
 		this.pzYs = new int[2][2][4];
-		// idx 0 start, idx 2 end?
 		this.gain = new int[2];
 	}
 
@@ -143,7 +141,7 @@ public class Filter
 	public static float octaveToFrequency(float var0) {
 		final float C0Hz = 32.703197F;
 		float var1 = C0Hz * (float)Math.pow(2.0D, (double)var0); 
-		return var1 * (float) Math.PI / (sampleRate / 2.f);
+		return var1 * (float) Math.PI / NYQUIST_FREQ;
 	}
 	public static float frequencyToOctave(float var0) {
 		final float C0Hz = 32.703197F;

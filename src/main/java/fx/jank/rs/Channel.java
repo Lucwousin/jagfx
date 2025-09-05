@@ -140,7 +140,7 @@ public class Channel
 
 			while (time > 5000L + this.timeMs) {
 				this.skip(256);
-				this.timeMs += (long)(256000 / SoundSystem.sampleRate);
+				this.timeMs += (long)(256000 / SoundSystem.sampleRateOut);
 			}
 		} catch (Exception var6) {
 			this.timeMs = time;
@@ -185,7 +185,7 @@ public class Channel
 		Arrays.fill(samples, 0, nBytes, 0);
 		this.available -= len;
 		if (this.source != null && this.available <= 0) {
-			this.available += SoundSystem.sampleRate / 16;
+			this.available += SoundSystem.sampleRateOut / 16;
 			PcmStream.stop(this.source);
 			this.addStream(this.source, this.source.available());
 

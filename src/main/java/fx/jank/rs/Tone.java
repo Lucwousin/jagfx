@@ -1,6 +1,6 @@
 package fx.jank.rs;
 
-import static fx.jank.rs.SoundSystem.sampleRate;
+import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import java.util.Arrays;
 import java.util.Random;
 import lombok.Getter;
@@ -61,7 +61,7 @@ public class Tone {
 	int len = 500;
 	int pos = 0;
 
-	private int[] samples = new int[sampleRate * MAX_TONE_LEN_SEC];
+	private int[] samples = new int[SAMPLE_RATE_SYNTH * MAX_TONE_LEN_SEC];
 	private int[] oscPhase = new int[5];
 	private int[] oscDelay = new int[5];
 	private int[] oscVolum = new int[5];
@@ -357,13 +357,13 @@ public class Tone {
 		}
 	}
 
-	public int[] synthAll(int sampleRate) {
-		int sampleCount = len * sampleRate / 1000;
+	public int[] synthAll() {
+		int sampleCount = len * SAMPLE_RATE_SYNTH / 1000;
 		return synthesize(sampleCount, len);
 	}
 
 	public BufferedTrack getStream() {
-		int[] mix = synthAll(sampleRate);
+		int[] mix = synthAll();
 		byte[] bmix = new byte[mix.length];
 		for (int i = 0; i < mix.length; i++) {
 			int s = mix[i] >> 8;
@@ -372,7 +372,7 @@ public class Tone {
 			}
 			bmix[i] = (byte)s;
 		}
-		return new BufferedTrack(sampleRate, bmix, 0, len);
+		return new BufferedTrack(SAMPLE_RATE_SYNTH, bmix, 0, len);
 	}
 
 	public static Tone defaultTone() {

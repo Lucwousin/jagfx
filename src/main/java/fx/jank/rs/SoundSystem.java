@@ -1,5 +1,6 @@
 package fx.jank.rs;
 
+import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -8,7 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SoundSystem implements Runnable {
 	public static SoundSystem instance;
-	public static int sampleRate = 22050;
+	/**
+	 * Output sample rate, there's a method to change this
+	 * modifying this does not change the sample rate synths use, change
+	 * Synth.SAMPLE_RATE_SYNTH for that
+ 	 */
+	public static int sampleRateOut = 22050;
 	protected static boolean stereo;
 	private static ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
@@ -58,7 +64,8 @@ public class SoundSystem implements Runnable {
 		if (sampleRate < 8000 || sampleRate > 48000)
 			throw new IllegalArgumentException("Although, just remove the check and see what happens!");
 		SoundSystem.stereo = stereo;
-		SoundSystem.sampleRate = sampleRate;
+		SoundSystem.sampleRateOut = sampleRate;
+		Resampler.instance = new Resampler(SAMPLE_RATE_SYNTH, sampleRateOut);
 	}
 
 	public static final Channel openChannel(int index, int bufferSize) {
@@ -81,7 +88,7 @@ public class SoundSystem implements Runnable {
 			}
 
 			var3.open(var3.capacity); // L: 66
-			if (SoundSystem.sampleRate > 0 && SoundSystem.instance == null) { // L: 67
+			if (SoundSystem.sampleRateOut > 0 && SoundSystem.instance == null) { // L: 67
 				SoundSystem.instance = new SoundSystem(); // L: 68
 			}
 

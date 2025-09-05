@@ -17,7 +17,7 @@ public class DeviceChannel extends Channel
 	byte[] buffer;
 
 	protected void init() {
-		this.format = new AudioFormat(SoundSystem.sampleRate, 16, stereo ? 2 : 1, true, false);
+		this.format = new AudioFormat(SoundSystem.sampleRateOut, 16, stereo ? 2 : 1, true, false);
 		this.buffer = new byte[256 << (stereo ? 2 : 1)]; // L: 23
 	}
 
