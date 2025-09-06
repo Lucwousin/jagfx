@@ -3,7 +3,6 @@ package fx.jank.ui;
 import fx.jank.ui.components.Graph;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;

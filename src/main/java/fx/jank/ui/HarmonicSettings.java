@@ -103,14 +103,14 @@ container.add(label);
 			add(new JLabel("Reverb"));
 			JPanel container = new JPanel(new GridLayout(0, 2));
 			reverbVol.addChangeListener(e -> {
-				parent.getSelectedTone().setReverbVolume((int)reverbVol.getValue());
+				parent.getSelectedTone().setReverbVol((int)reverbVol.getValue());
 				parent.update();
 			});
 			container.add(new JLabel("Reverb vol:"));
 			setSpinnerWidth(reverbVol);
 			container.add(reverbVol);
 			reverbDel.addChangeListener(e -> {
-				parent.getSelectedTone().setReverbDelay((int)reverbDel.getValue());
+				parent.getSelectedTone().setReverbDel((int)reverbDel.getValue());
 				parent.update();
 			});
 			container.add(new JLabel("Reverb del:"));
@@ -123,11 +123,11 @@ container.add(label);
 			if (parent == null || parent.getSelectedTone() == null)
 				return;
 			Tone t = parent.getSelectedTone();
-			int vol = t.getReverbVolume();
+			int vol = t.getReverbVol();
 			if ((int)reverbVol.getValue() != vol) {
 				reverbVol.setValue(vol);
 			}
-			int del = t.getReverbDelay();
+			int del = t.getReverbDel();
 			if ((int)reverbDel.getValue() != del) {
 				reverbDel.setValue(del);
 			}

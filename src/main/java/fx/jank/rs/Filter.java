@@ -3,13 +3,20 @@ package fx.jank.rs;
 import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @ToString
 @Getter
+@Slf4j
 public class Filter
 {
 	private static final float NYQUIST_FREQ = SAMPLE_RATE_SYNTH / 2.f;
-	float[][] coefficientsFloat = new float[2][8];
+	private static final float FREQ_STEP = (float)Math.PI / NYQUIST_FREQ;
+	private static final float BASE_OCTAVE = 32.703197F;
+	private static final float OCTAVE_SCALE = 8.0f / (float)Envelope.SCALE;
+	private static final float MAG_SCALE = 200.0f / (float)Envelope.SCALE;
+
+	float[][] coefff = new float[2][8];
 	int[][] coefficients = new int[2][8];
 
 	// current gain, as a float
@@ -19,38 +26,42 @@ public class Filter
 
 	// idx 0 pole count, idx 1 zero count
 	int[] orderN;
-	int[][][] pzXs;
-	int[][][] pzYs;
+	int[][][] real;
+	int[][][] imag;
 	int[] gain;
 
 	Filter() {
 		this.orderN = new int[2];
-		this.pzXs = new int[2][2][4];
-		this.pzYs = new int[2][2][4];
+		this.real = new int[2][2][4];
+		this.imag = new int[2][2][4];
 		this.gain = new int[2];
 	}
 
-	private void linearizeRefGain(float mix) {
-		float gainDb = (float)this.gain[0] + (float)(this.gain[1] - this.gain[0]) * mix;
-		gainDb *= 100.f * 65536.f / (float) Integer.MAX_VALUE;
-		linearGain = fromDecibel(gainDb);
-		linearGainInt = (int)(linearGain * 65536.0F);
+	private static float interpolate(float start, float end, float ratio) {
+		return ratio * (end - start) + start;
 	}
+	private static float interpolatePoint(int[][][] ps, int f, int i, float mix) {
+		return interpolate(ps[f][0][i], ps[f][1][i], mix);
+	}
+	private void linearizeRefGain(float mix) {
+		float gainDb = interpolate(this.gain[0], this.gain[1], mix) * MAG_SCALE;
+		linearGain = fromDecibel(gainDb);
+		linearGainInt = (int)linearGain * Envelope.SCALE;
+	}
+
+	//
 	float getStrength(int f, int i, float mix) {
-		float db = (float)this.pzYs[f][0][i] + mix * (float)(this.pzYs[f][1][i] - this.pzYs[f][0][i]);
-		db *= 100.f / 65536.f; 
+		float db = interpolatePoint(imag, f, i, mix) * (MAG_SCALE / 2.0f);
 		return 1.0F - fromDecibel(db);
 	}
 
 
-	float getBandwidth(int f, int i, float mix) {
-		float var4 = (float)this.pzXs[f][0][i] + mix * (float)(this.pzXs[f][1][i] - this.pzXs[f][0][i]);
-		var4 *= 8.f / 65536.f; 
-		return octaveToFrequency(var4);
+	float getFrequency(int f, int i, float mix) {
+		float var4 = interpolatePoint(real, f, i, mix) * OCTAVE_SCALE;
+		return octaveToRad(var4);
 	}
 
 	int compute(int f, float mix) {
-		float var3;
 		if (f == 0) {
 			linearizeRefGain(mix);
 		}
@@ -59,35 +70,39 @@ public class Filter
 			return 0;
 		}
 
-		var3 = this.getStrength(f, 0, mix);
-		coefficientsFloat[f][0] = -2.0F * var3 * (float)Math.cos((double)this.getBandwidth(f, 0, mix));
-		coefficientsFloat[f][1] = var3 * var3;
+		float y = this.getStrength(f, 0, mix);
+		coefff[f][0] = -2.0F * y * (float)Math.cos(this.getFrequency(f, 0, mix));
+		coefff[f][1] = y * y;
 
-		int var4;
-		for (var4 = 1; var4 < this.orderN[f]; ++var4) {
-			var3 = this.getStrength(f, var4, mix);
-			float var5 = -2.0F * var3 * (float)Math.cos((double)this.getBandwidth(f, var4, mix));
+		for (int i = 1; i < this.orderN[f]; ++i) {
+			float var3 = this.getStrength(f, i, mix);
+			float var5 = -2.0F * var3 * (float)Math.cos(this.getFrequency(f, i, mix));
 			float var6 = var3 * var3;
-			coefficientsFloat[f][var4 * 2 + 1] = coefficientsFloat[f][var4 * 2 - 1] * var6;
-			coefficientsFloat[f][var4 * 2] = coefficientsFloat[f][var4 * 2 - 1] * var5 + coefficientsFloat[f][var4 * 2 - 2] * var6;
+			coefff[f][i * 2 + 1] = coefff[f][(i - 1) * 2 + 1] * var6;
+			coefff[f][i * 2] = coefff[f][i * 2 - 1] * var5 + coefff[f][i * 2 - 2] * var6;
 
-			for (int var7 = var4 * 2 - 1; var7 >= 2; --var7) { 
-				coefficientsFloat[f][var7] += coefficientsFloat[f][var7 - 1] * var5 + coefficientsFloat[f][var7 - 2] * var6;
+			for (int var7 = i * 2 - 1; var7 >= 2; --var7) {
+				coefff[f][var7] += coefff[f][var7 - 1] * var5 + coefff[f][var7 - 2] * var6;
 			}
 
-			coefficientsFloat[f][1] += coefficientsFloat[f][0] * var5 + var6;
-			coefficientsFloat[f][0] += var5;
+			coefff[f][1] += coefff[f][0] * var5 + var6;
+			coefff[f][0] += var5;
 		}
 
 		if (f == 0) { 
-			for (var4 = 0; var4 < this.orderN[0] * 2; ++var4) {
-				coefficientsFloat[0][var4] *= linearGain;
+			for (int i = 0; i < this.orderN[0] * 2; ++i) {
+				coefff[0][i] *= linearGain;
 			}
 		}
 
-		for (var4 = 0; var4 < this.orderN[f] * 2; ++var4) {
-			coefficients[f][var4] = (int)(coefficientsFloat[f][var4] * 65536.0F);
+		StringBuilder strb = new StringBuilder();
+		strb.append(f == 0 ? "zero" : "pole")
+			.append(" coefficients (").append(this.orderN[f]).append("):\n");
+		for (int i = 0; i < this.orderN[f] * 2; ++i) {
+			coefficients[f][i] = (int)(coefff[f][i] * Envelope.SCALE);
+			strb.append(String.format("(%d): %.6f; ", i, coefff[f][i]));
 		}
+		log.info(strb.toString());
 
 		return this.orderN[f] * 2;
 	}
@@ -95,40 +110,52 @@ public class Filter
 
 	final void readFrom(ByteStream in, Envelope envelope) {
 		int pzCountPacked = in.getUint8();
-		// 0 - 15...
 		this.orderN[0] = pzCountPacked >> 4;
 		this.orderN[1] = pzCountPacked & 15;
-		if (pzCountPacked == 0)
-		{
+		if (pzCountPacked == 0) {
 			this.gain[0] = this.gain[1] = 0;
 			return;
 		}
+		log.info("Reading filter; zeros ({}) poles ({})", orderN[0], orderN[1]);
 
 		this.gain[0] = in.getUint16();
 		this.gain[1] = in.getUint16();
+		log.info("gain[0] = {}, gain[1] = {}", gain[0], gain[1]);
+
 		int var7 = in.getUint8();
+		log.info("Conjungate mask; zero ({}) pole ({})", var7 >> 4, var7 & 0xf);
 
 		for (int i = 0; i < 2; ++i) {
 			for (int ptIdx = 0; ptIdx < this.orderN[i]; ++ptIdx) {
-				this.pzXs[i][0][ptIdx] = in.getUint16();
-				this.pzYs[i][0][ptIdx] = in.getUint16();
+				this.real[i][0][ptIdx] = in.getUint16();
+				this.imag[i][0][ptIdx] = in.getUint16();
 			}
 		}
 
 		for (int i = 0; i < 2; ++i) {
-			for (int var6 = 0; var6 < this.orderN[i]; ++var6) {
-				if ((var7 & (1 << (i * 4) << var6)) != 0) {
-					this.pzXs[i][1][var6] = in.getUint16();
-					this.pzYs[i][1][var6] = in.getUint16();
+			for (int j = 0; j < this.orderN[i]; ++j) {
+				boolean complex = (var7 & (1 << (i * 4) << j)) != 0;
+				if (complex) {
+					this.real[i][1][j] = in.getUint16();
+					this.imag[i][1][j] = in.getUint16();
 				} else {
-					this.pzXs[i][1][var6] = this.pzXs[i][0][var6];
-					this.pzYs[i][1][var6] = this.pzYs[i][0][var6];
+					this.real[i][1][j] = this.real[i][0][j];
+					this.imag[i][1][j] = this.imag[i][0][j];
 				}
+				final String ptFormat = " x(%5d) y(%5d);";
+				StringBuilder strb = new StringBuilder();
+				strb.append(i == 0 ? "zero:" : "pole:")
+					.append(String.format(ptFormat, this.real[i][0][j], this.imag[i][0][j]));
+				if (complex)
+					strb.append(String.format(ptFormat, this.real[i][1][j], this.imag[i][1][j]));
+				log.info(strb.toString());
 			}
 		}
 
-		if (var7 != 0 || this.gain[1] != this.gain[0])
+		if (var7 != 0 || this.gain[1] != this.gain[0]) {
 			envelope.readStages(in);
+			log.info("Trans curve: {}", envelope);
+		}
 	}
 
 	public static float fromDecibel(float db) {
@@ -138,14 +165,8 @@ public class Filter
 		return 20.f * (float) Math.log10(mag);
 	}
 
-	public static float octaveToFrequency(float var0) {
-		final float C0Hz = 32.703197F;
-		float var1 = C0Hz * (float)Math.pow(2.0D, (double)var0); 
-		return var1 * (float) Math.PI / NYQUIST_FREQ;
-	}
-	public static float frequencyToOctave(float var0) {
-		final float C0Hz = 32.703197F;
-		float var1 = C0Hz * (float)Math.pow(2.0D, (double)var0);
-		return var1;
+	public static float octaveToRad(float var0) {
+		float var1 = BASE_OCTAVE * (float)Math.pow(2.0D, var0);
+		return var1 * FREQ_STEP;
 	}
 }

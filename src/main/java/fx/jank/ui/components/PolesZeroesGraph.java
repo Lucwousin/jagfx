@@ -33,8 +33,8 @@ public class PolesZeroesGraph extends Graph
 			g.drawLine(0, gainY, getWidth(), gainY);
 		}
 
-		int[][][] xs = f.getPzXs();
-		int[][][] ys = f.getPzYs();
+		int[][][] xs = f.getReal();
+		int[][][] ys = f.getImag();
 		int order = f.getOrderN()[index];
 		if (order <= 0) return;
 

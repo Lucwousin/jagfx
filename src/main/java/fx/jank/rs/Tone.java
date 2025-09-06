@@ -52,8 +52,8 @@ public class Tone {
 	private int[] semiInput = new int[5];
 	private int[] delInput = new int[5];
 
-	private int reverbDelay = 0;
-	private int reverbVolume = 100;
+	private int reverbDel = 0;
+	private int reverbVol = 100;
 
 	private Filter filter = new Filter();
 	private Envelope transitionCurve = new Envelope();
@@ -73,38 +73,27 @@ public class Tone {
 		log.info("Reading Tone!");
 		freqBase.readFrom(in);
 		ampBase.readFrom(in);
-
 		log.info("FreqBase {}", freqBase);
 		log.info("AmpBase {}", ampBase);
 
-		if (in.tryGet())
-		{
-			freqModRate = new Envelope();
-			freqModRate.readFrom(in);
-			freqModRange = new Envelope();
-			freqModRange.readFrom(in);
+		if (in.tryGet()) {
+			(freqModRate = new Envelope()).readFrom(in);
+			(freqModRange = new Envelope()).readFrom(in);
 			log.info("FreqModRate {}", freqModRate);
 			log.info("FreqModRange {}", freqModRange);
 		}
-		if (in.tryGet())
-		{
-			ampModRate = new Envelope();
-			ampModRate.readFrom(in);
-			ampModRange = new Envelope();
-			ampModRange.readFrom(in);
+		if (in.tryGet()) {
+			(ampModRate = new Envelope()).readFrom(in);
+			(ampModRange = new Envelope()).readFrom(in);
 			log.info("AmpModRate {}", ampModRate);
 			log.info("AmpModRange {}", ampModRange);
 		}
-		if (in.tryGet())
-		{
-			gapOff = new Envelope();
-			gapOff.readFrom(in);
-			gapOn = new Envelope();
-			gapOn.readFrom(in);
+		if (in.tryGet()) {
+			(gapOff = new Envelope()).readFrom(in);
+			(gapOn = new Envelope()).readFrom(in);
 			log.info("gapOn {}", gapOff);
 			log.info("gapOff {}", gapOn);
 		}
-
 
 		for (int i = 0; i < 10; i++) {
 			int vol = in.getVarUint16();
@@ -116,9 +105,9 @@ public class Tone {
 			delInput[i] = in.getVarUint16();
 			log.info("harmonic osc {}: vol: {}, semi: {}, del: {}", i, volInput[i], (float) semiInput[i]/10, delInput[i]);
 		}
-		reverbDelay = in.getVarUint16();
-		reverbVolume = in.getVarUint16();
-		log.info("reverb delay: {}, volume: {}", reverbDelay, reverbVolume);
+		reverbDel = in.getVarUint16();
+		reverbVol = in.getVarUint16();
+		log.info("reverb delay: {}, volume: {}", reverbDel, reverbVol);
 		len = in.getUint16();
 		pos = in.getUint16();
 		log.info("Duration: {}, offset: {}", len, pos);
@@ -270,11 +259,11 @@ public class Tone {
 	}
 
 	void reverb(int samples, double sampleRate) {
-		if (reverbVolume > 0 && reverbDelay > 0) {
-			int reverbSampleLen = (int)(reverbDelay * sampleRate);
+		if (reverbVol > 0 && reverbDel > 0) {
+			int reverbSampleLen = (int)(reverbDel * sampleRate);
 
 			for (int i = reverbSampleLen; i < samples; ++i) {
-				this.samples[i] += this.samples[i - reverbSampleLen] * this.reverbVolume / 100;
+				this.samples[i] += this.samples[i - reverbSampleLen] * this.reverbVol / 100;
 			}
 		}
 	}

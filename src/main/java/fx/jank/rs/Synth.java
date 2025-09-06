@@ -25,7 +25,7 @@ public class Synth
 	@Setter
 	int l2;
 
-	public Synth() {};
+	public Synth() {}
 
 	Synth(ByteStream in) {
 		for (int i = 0; i < MAX_TONES; i++) {

@@ -11,9 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 public class Envelope
 {
+	public static final int SCALE = 65536;
+	public static final double SCALE_D = (double) SCALE;
+	public static final float SCALE_F = (float) SCALE;
 	private int bands = 2;
-	private int[] x = {0, 65535};
-	private int[] y = {0, 65535};
+	private int[] x = {0, SCALE - 1};
+	private int[] y = {0, SCALE - 1};
 
 	// ie minHz
 	int min = 0;
@@ -21,10 +24,10 @@ public class Envelope
 	int max = 100;
 	// waveform (off, sqr, sin, saw, noise)
 	int waveFun = 0;
-	private int sampleLimit;
+	private int sampleLen;
 	private int band;
-	private int sampleIndex;
-	private int velocity;
+	private int sampleX;
+	private int dydx;
 	private int amplitude;
 
 	public Envelope(int min, int max) {
@@ -39,8 +42,7 @@ public class Envelope
 		this.bands = Math.min(x.length, y.length);
 	}
 
-	void readFrom(ByteStream in)
-	{
+	void readFrom(ByteStream in) {
 		waveFun = in.getUint8();
 
 		min = in.getInt();
@@ -67,33 +69,29 @@ public class Envelope
 
 	public void reset()
 	{
-		sampleLimit = 0;
+		sampleLen = 0;
 		band = 0;
-		velocity = 0;
+		dydx = 0;
 		amplitude = 0;
-		sampleIndex = 0;
+		sampleX = 0;
 	}
 
 	public int sample(int n)
 	{
-		if (sampleIndex >= sampleLimit)
+		if (sampleX >= sampleLen)
 		{
-			amplitude = y[band++] * 32768;
-			if (band >= bands)
-			{
-				band = bands - 1;
-			}
+			amplitude = y[band++] * (SCALE / 2);
+			band = Math.min(band, bands - 1);
 
-			sampleLimit = (int) (((double) x[band] / 65536.0D) * (double) n);
-			if (sampleLimit > sampleIndex)
-			{
-				velocity = ((y[band] << 15) - this.amplitude) / (sampleLimit - sampleIndex);
+			sampleLen = (int) (((double)x[band] / SCALE_D) * (double)n);
+			if (sampleLen > sampleX) {
+				dydx = ((y[band] << 15) - this.amplitude) / (sampleLen - sampleX);
 			}
 		}
 
-		amplitude += velocity;
-		++sampleIndex;
-		return (amplitude - velocity) / 32768;
+		amplitude += dydx;
+		++sampleX;
+		return (amplitude - dydx) >> 15;
 	}
 
 	public int getMagnitude() {
@@ -106,15 +104,13 @@ public class Envelope
 
 	@Override
 	public String toString() {
+		final String format = "Envelope: %5s, min-max: %5d-%5d, bands: %2d\n";
+		final String pointFormat = "%2d=(x:%5d,y:%5d); ";
 		StringBuilder strb = new StringBuilder();
-		strb.append("Envelope (").append(bands).append("), ")
-			.append("min: ").append(min).append(", ")
-			.append("max: ").append(max).append('\n');
-		for (int i = 0; i < bands; i++) {
-			strb.append(i).append(") ")
-				.append("x: ").append(x[i]).append("; ")
-				.append("y: ").append(y[i]).append('\n');
-		}
+		strb.append(String.format(format, WaveFun.values()[waveFun].text, min, max, bands));
+
+		for (int i = 0; i < bands; i++)
+			strb.append(String.format(pointFormat, i, x[i], y[i]));
 		return strb.toString();
 	}
 	

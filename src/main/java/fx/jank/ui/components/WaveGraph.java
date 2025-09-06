@@ -1,6 +1,5 @@
 package fx.jank.ui.components;
 
-import static fx.jank.rs.SoundSystem.sampleRateOut;
 import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import fx.jank.rs.Tone;
 import java.awt.Color;

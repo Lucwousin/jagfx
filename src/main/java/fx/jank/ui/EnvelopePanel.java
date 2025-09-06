@@ -1,8 +1,6 @@
 package fx.jank.ui;
 
-import java.awt.Color;
 import java.awt.GridLayout;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JPanel;
 
@@ -81,11 +79,11 @@ public class EnvelopePanel extends JPanel
 	public void update() {
 		if (graphs == null)
 			return;
+		this.settings.update();
 		for (GraphView v : graphs) {
 			if (v == null)
 				break;
 			v.update();
 		}
-		this.settings.update();
 	}
 }

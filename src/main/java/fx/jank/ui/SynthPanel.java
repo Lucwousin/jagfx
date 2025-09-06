@@ -25,7 +25,7 @@ public class  SynthPanel extends JPanel {
 	private static final int PAD = 8;
 
 	@Getter
-	private Synth synth = new Synth();;
+	private Synth synth = new Synth();
 	private int selectedTone = 0;
 
 	private boolean initialized = false;
@@ -140,22 +140,14 @@ public class  SynthPanel extends JPanel {
 
 	void setSelectedTone(int idx) {
 		this.selectedTone = idx;
-		this.harmonicSettings.update();
-		this.freqBaseCfg.update();
-		this.frqEditor.update();
-		this.ampEditor.update();
-		this.gapEditor.update();
-		this.loopControls.update();
-		this.filterPanel.update();
+		this.update();
 		this.synthTone();
 	}
 
 	void play() {
 		stop();
-		if (soloBuffer == null) {
-			soloBuffer = this.getSelectedTone().getStream();
-			soloBuffer = soloBuffer.resample(Resampler.instance);
-		}
+		soloBuffer = this.getSelectedTone().getStream();
+		soloBuffer = soloBuffer.resample(Resampler.instance);
 		soloBuffer.loop = mediaControls.shouldLoop();
 		soloBuffer.l1 = loopControls.getL1();
 		soloBuffer.l2 = loopControls.getL2();
@@ -166,10 +158,8 @@ public class  SynthPanel extends JPanel {
 
 	void playAll() {
 		stop();
-		if (buffer == null) {
-			buffer = synth.getStream();
-			buffer = buffer.resample(Resampler.instance);
-		}
+		buffer = synth.getStream();
+		buffer = buffer.resample(Resampler.instance);
 		buffer.loop = mediaControls.shouldLoop();
 		this.stream = RawPcmStream.createRawPcmStream(buffer, 100, 255);
 		this.stream.setNumLoops(mediaControls.getLoopCount());
@@ -192,6 +182,13 @@ public class  SynthPanel extends JPanel {
 	}
 
 	public void update() {
+		this.harmonicSettings.update();
+		this.freqBaseCfg.update();
+		this.frqEditor.update();
+		this.ampEditor.update();
+		this.gapEditor.update();
+		this.loopControls.update();
+		this.filterPanel.update();
 		this.toneChanged = true; // lol
 		synthTone();
 
