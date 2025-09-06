@@ -26,6 +26,9 @@ public class SynthLoader {
 	private static final Index soundIndex;
 	private static SynthLoader instance;
 
+
+	// todo: add https://oldschool.runescape.wiki/w/List_of_sound_IDs
+	//todo note: there's a synth called default which is probably the default, lol
 	static {
 		try {
 			store = new Store(new File(System.getProperty("user.home") + "\\.runelite\\jagexcache\\oldschool\\LIVE"));

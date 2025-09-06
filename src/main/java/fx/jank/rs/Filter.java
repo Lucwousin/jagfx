@@ -103,6 +103,7 @@ public class Filter
 			strb.append(String.format("(%d): %.6f; ", i, coefff[f][i]));
 		}
 		log.info(strb.toString());
+		log.info("{}", getStrength(1, 0, 1));
 
 		return this.orderN[f] * 2;
 	}
