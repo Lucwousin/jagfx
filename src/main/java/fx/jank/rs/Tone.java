@@ -176,7 +176,7 @@ public class Tone {
 		return new Pair<>(step, base);
 	}
 
-	int evaluateWave(int phase, int amplitude, int waveform) {
+	public static int evaluateWave(int phase, int amplitude, int waveform) {
 		if (waveform == 1) {
 			return (phase & 32767) < 16384 ? amplitude
 				: -amplitude;
@@ -321,15 +321,21 @@ public class Tone {
 				++i;
 			}
 
-			if (i >= samples - zeroDelay) {
+			if (i >= samples - zeroDelay)
+			{
+				filterTail(samples, i, zeroDelay, poleDelay);
 				break;
 			}
+
 			zeroDelay = filter.compute(0, (float) filterMix / 65536.0F);
 			poleDelay = filter.compute(1, (float) filterMix / 65536.0F);
 		}
+	}
 
-		while (i < samples)
-		{
+
+
+	private void filterTail(int samples, int i, int zeroDelay, int poleDelay) {
+		while (i < samples) {
 			int sample = 0;
 
 			for (int j = i + zeroDelay - samples; j < zeroDelay; ++j) {

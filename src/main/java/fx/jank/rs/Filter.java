@@ -48,7 +48,7 @@ public class Filter
 	private void linearizeRefGain(float mix) {
 		float gainDb = interpolate(this.gain[0], this.gain[1], mix) * MAG_SCALE;
 		linearGain = fromDecibel(gainDb);
-		linearGainInt = (int)linearGain * Envelope.SCALE;
+		linearGainInt = (int)(linearGain * Envelope.SCALE);
 	}
 
 	//

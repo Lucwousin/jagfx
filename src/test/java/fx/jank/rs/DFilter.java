@@ -2,29 +2,28 @@ package fx.jank.rs;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class DFilter {
-	static float[][] field413;
-	public static int[][] coefficients;
-	static float field409;
-	static int forwardMultiplier;
-	int[] pairs;
-	int[][][] field406;
-	int[][][] field407;
-	int[] field408;
-
-	static {
-		field413 = new float[2][8]; // L: 13
-		coefficients = new int[2][8]; // L: 14
-	}
+	public float[][] field413;
+	public int[][] coefficients;
+	public float field409;
+	public int forwardMultiplier;
+	public int[] pairs;
+	public int[][][] field406;
+	public int[][][] field407;
+	public int[] field408;
 
 	public DFilter() {
 		this.pairs = new int[2]; // L: 8
 		this.field406 = new int[2][2][4]; // L: 10
 		this.field407 = new int[2][2][4]; // L: 11
 		this.field408 = new int[2]; // L: 12
+		this.field413 = new float[2][8]; // L: 13
+		this.coefficients = new int[2][8]; // L: 14
 	} // L: 21
 
 	float method1022(int var1, int var2, float var3) {

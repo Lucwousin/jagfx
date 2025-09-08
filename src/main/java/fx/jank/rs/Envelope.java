@@ -104,7 +104,7 @@ public class Envelope
 
 	@Override
 	public String toString() {
-		final String format = "Envelope: %5s, min-max: %5d-%5d, bands: %2d\n";
+		final String format = "Envelope: %5s, min-max: %5d-%-5d, bands: %2d\n";
 		final String pointFormat = "%2d=(x:%5d,y:%5d); ";
 		StringBuilder strb = new StringBuilder();
 		strb.append(String.format(format, WaveFun.values()[waveFun].text, min, max, bands));
