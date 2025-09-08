@@ -2,11 +2,13 @@ package fx.jank.rs;
 
 import static fx.jank.rs.Synth.SAMPLE_RATE_SYNTH;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @ToString
 @Getter
+@Setter
 @Slf4j
 public class Filter
 {
@@ -30,7 +32,7 @@ public class Filter
 	int[][][] imag;
 	int[] gain;
 
-	Filter() {
+	public Filter() {
 		this.orderN = new int[2];
 		this.real = new int[2][2][4];
 		this.imag = new int[2][2][4];
@@ -61,7 +63,7 @@ public class Filter
 		return octaveToRad(var4);
 	}
 
-	int compute(int f, float mix) {
+	public int compute(int f, float mix) {
 		if (f == 0) {
 			linearizeRefGain(mix);
 		}
@@ -97,10 +99,10 @@ public class Filter
 
 		StringBuilder strb = new StringBuilder();
 		strb.append(f == 0 ? "zero" : "pole")
-			.append(" coefficients (").append(this.orderN[f]).append("):\n");
+			.append(" coefficients:");
 		for (int i = 0; i < this.orderN[f] * 2; ++i) {
 			coefficients[f][i] = (int)(coefff[f][i] * Envelope.SCALE);
-			strb.append(String.format("(%d): %.6f; ", i, coefff[f][i]));
+			strb.append(String.format("%d): %.6f; ", i, coefff[f][i]));
 		}
 		log.info(strb.toString());
 		log.info("{}", getStrength(1, 0, 1));
