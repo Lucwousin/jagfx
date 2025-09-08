@@ -283,73 +283,44 @@ public class Tone {
 
 		int i;
 		int n = Math.min(poleDelay, samples - zeroDelay);
-		for (i = 0; i < n; i++)
-		{
-			int sample = (int) (((long) this.samples[i + zeroDelay] * (long) filter.linearGainInt) >> 16);
-
-			for (int j = 0; j < zeroDelay; ++j) {
-				sample += (int)((long)this.samples[i + zeroDelay - 1 - j] * (long) filter.coefficients[0][j] >> 16);
-			}
-
-			for (int j = 0; j < i; ++j) {
-				sample -= (int)((long)this.samples[i - 1 - j] * (long)filter.coefficients[1][j] >> 16);
-			}
-
-			this.samples[i] = sample;
+		for (i = 0; i < n; i++) {
+			this.samples[i] = filterSample(i, zeroDelay, i, samples);
 			filterMix = this.transitionCurve.sample(samples + 1);
 		}
 
-		boolean var21 = true;
-		for (n = 128; var21; n += 128) {
-			if (n > samples - zeroDelay) {
-				n = samples - zeroDelay;
-			}
-
-			while (i < n) {
-				int sample = (int)((long)this.samples[i + zeroDelay] * (long)filter.linearGainInt >> 16);
-
-				for (int j = 0; j < zeroDelay; ++j) {
-					sample += (int)((long)this.samples[i + zeroDelay - 1 - j] * (long)filter.coefficients[0][j] >> 16);
-				}
-
-				for (int j = 0; j < poleDelay; ++j) {
-					sample -= (int)((long)this.samples[i - 1 - j] * (long)filter.coefficients[1][j] >> 16);
-				}
-
-				this.samples[i] = sample;
+		for (n = 128; ; n = Math.min(n + 128, samples - zeroDelay)) {
+			for (; i < n; i++) {
+				this.samples[i] = filterSample(i, zeroDelay, poleDelay, samples);
 				filterMix = this.transitionCurve.sample(samples + 1);
-				++i;
 			}
-
 			if (i >= samples - zeroDelay)
-			{
-				filterTail(samples, i, zeroDelay, poleDelay);
 				break;
-			}
-
 			zeroDelay = filter.compute(0, (float) filterMix / 65536.0F);
 			poleDelay = filter.compute(1, (float) filterMix / 65536.0F);
 		}
-	}
 
-
-
-	private void filterTail(int samples, int i, int zeroDelay, int poleDelay) {
-		while (i < samples) {
+		for (; i < samples; i++) {
 			int sample = 0;
-
-			for (int j = i + zeroDelay - samples; j < zeroDelay; ++j) {
+			for (int j = i + zeroDelay - samples; j < zeroDelay; ++j)
 				sample += (int) ((long) this.samples[i + zeroDelay - 1 - j] * (long) filter.coefficients[0][j] >> 16);
-			}
-
-			for (int j = 0; j < poleDelay; ++j) {
+			for (int j = 0; j < poleDelay; ++j)
 				sample -= (int) ((long) this.samples[i - 1 - j] * (long) filter.coefficients[1][j] >> 16);
-			}
 
 			this.samples[i] = sample;
 			this.transitionCurve.sample(samples + 1);
-			++i;
 		}
+	}
+
+	private int filterSample(int index, int ffwCount, int fbCount, int sampleN) {
+		int sample = (int) (((long) this.samples[index + ffwCount] * (long) filter.linearGainInt) >> 16);
+
+		for (int j = 0; j < ffwCount; ++j)
+			sample += (int)((long)this.samples[index + ffwCount - 1 - j] * (long) filter.coefficients[0][j] >> 16);
+
+		for (int j = 0; j < fbCount; ++j)
+			sample -= (int)((long)this.samples[index - 1 - j] * (long)filter.coefficients[1][j] >> 16);
+
+		return sample;
 	}
 
 	public int[] synthAll() {
