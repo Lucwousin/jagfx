@@ -18,6 +18,10 @@ There is no way to:
 
 If you search for `todo` in this project you'll probably also find more stuff to do, if that's your thing.
 
+### Can you explain how to use it?
+
+Every synth is made up of up to 10 tones, each with their own synth/filter parameters. Each tone consists of up to 5 harmonic oscillators generating a waveform. Each oscillator's volume and pitch can be set relative to the base amplitude and frequency, and the phase can be controlled with a delay setting. The base frequency is determined using an envelope with a configurable minimum and maximum. The base amplitude is determined similarly. Both frequency and amplitude can be modulated by another wave, these waves are configured the same way as the base frequency/amplitude are. The final 2 envelopes on the main panel, labeled "gap on" and "gap off" are a bit different. These don't configure a wave that modulates the output, but instead turn the output on and off intermittently. This can be used for frequency synthesis, by choosing a square wave with a frequency of 0Hz a constant positive "voltage" can be generated for this purpose. Reverb can also be enabled, with a configurable delay and volume. Finally, each tone has an optional configurable filter.
+
 ### Screenshots
 
 ![A screenshot of the original gui (cow)](references/cow_screenshot.jpeg)
